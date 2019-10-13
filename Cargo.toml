@@ -6,3 +6,4 @@ edition = "2018"
 description = "Cartesian minimum bounding box - [bbox-2d is bounding-box-2d]"
 
 [dependencies]
+float_eq = { git = "https://github.com/intdxdt/float_eq", branch = "master" }
