@@ -1,0 +1,8 @@
+[package]
+name = "bbox-2d"
+version = "0.1.0"
+authors = ["Titus Tienaah <titus.intdxdt@gmail.com>"]
+edition = "2018"
+description = "Cartesian minimum bounding box - [bbox-2d is bounding-box-2d]"
+
+[dependencies]
