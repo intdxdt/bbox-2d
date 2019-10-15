@@ -1,6 +1,7 @@
 use std::ops;
 use float_eq::feq;
 use point::Point;
+use std::fmt::{Display, Formatter, Error};
 
 ///MBR
 #[derive(Copy, Clone, Debug)]
@@ -11,8 +12,6 @@ pub struct MBR {
     pub maxy: f64,
 }
 
-
-#[allow(dead_code)]
 impl MBR {
     ///construct new MBR
     pub fn new(x1: f64, y1: f64, x2: f64, y2: f64) -> MBR {
@@ -153,7 +152,7 @@ impl MBR {
 
     ///Computes the center of minimum bounding box - (x, y)
     #[inline]
-    fn center(&self) -> Point {
+    fn centre(&self) -> Point {
         Point { x: (self.minx + self.maxx) / 2.0, y: (self.miny + self.maxy) / 2.0 }
     }
 
@@ -314,6 +313,12 @@ impl PartialEq for MBR {
     }
 }
 
+impl Display for MBR{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{}", self.wkt())
+    }
+}
+
 impl<'a, 'b> ops::BitAnd<&'b MBR> for &'a MBR {
     type Output = Option<MBR>;
     fn bitand(self, rhs: &'b MBR) -> Self::Output {
@@ -343,49 +348,31 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
 //Todo: complete test with coverage
 #[cfg(test)]
 mod mbr_tests {
-    use super::MBR;
+    use super::*;
 
     #[test]
     fn test_mbr() {
         let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
         let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
         let m = &m0 + &m1;
-        println!("{:?}", m);
-        assert_eq!(m.minx, -0.5);
-        assert_eq!(m.minx, -0.5);
-        assert_eq!(m.miny, -0.2);
-        assert_eq!(m.maxx, 2.0);
-        assert_eq!(m.maxy, 2.0);
+        println!("{}", m);
+        assert_eq!(m, MBR::new(-0.5, -0.2, 2.0, 2.0));
 
         let m1 = MBR::new_raw(2.0, 2.0, -0.5, -0.2);
-        assert_eq!(m1.minx, 2.0);
-        assert_eq!(m1.miny, 2.0);
-        assert_eq!(m1.maxx, -0.5);
-        assert_eq!(m1.maxy, -0.2);
+        assert_eq!(m1, MBR{minx:2.0, miny:2.0, maxx:-0.5, maxy:-0.2});
 
         let m = MBR::new(2.0, 2.0, 0.5, 0.2);
-        assert_eq!(m.minx, 0.5);
-        assert_eq!(m.miny, 0.2);
-        assert_eq!(m.maxx, 2.0);
-        assert_eq!(m.maxy, 2.0);
+        assert_eq!(m, (MBR{minx: 0.5, miny: 0.2, maxx: 2.0, maxy: 2.0}));
 
-        assert_eq!(m.height(), 1.8);
-        assert_eq!(m.width(), 1.5);
-        assert_eq!(m.area(), 1.5 * 1.8);
-        assert!(!m.is_point());
+        assert_eq!((m.width(), m.height(), m.area(), m.is_point()), (1.5, 1.8, 1.5 * 1.8, false));
         assert_eq!(m.as_tuple(), (0.5, 0.2, 2.0, 2.0));
+        assert_eq!(m.as_array(), [0.5, 0.2, 2.0, 2.0]);
 
         let b = m.as_poly_array();
-        assert_eq!(b.len(), 5);
-        assert_eq!(b[0].x, b[4].x);
-        assert_eq!(b[0].y, b[4].y);
-
+        assert_eq!((b[0], b[4], b.len()), (Point{x:0.5,y: 0.2}, Point{x:0.5,y: 0.2}, 5));
 
         let m1 = m.clone();
-        assert_eq!(m1.area(), m.area());
-        assert_ne!(0.1 + 0.2, 0.3);
-        assert!(m1.equals(&m));
-
+        assert_eq!((m1.equals(&m), m1.area()), (m1 == m , m.area()));
         println!("{}", m.wkt());
     }
 }
