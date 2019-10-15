@@ -14,8 +14,6 @@ pub struct MBR {
 }
 
 
-
-
 #[allow(dead_code)]
 impl MBR {
     ///construct new MBR
@@ -30,6 +28,18 @@ impl MBR {
 
     pub fn new_raw(minx: f64, miny: f64, maxx: f64, maxy: f64) -> MBR {
         MBR { minx, miny, maxx, maxy }
+    }
+
+    pub fn new_default() -> MBR {
+        MBR { minx: 0.0, miny: 0.0, maxx: 0.0, maxy: 0.0 }
+    }
+
+    pub fn new_from_pt(a: (f64, f64)) -> MBR {
+        MBR { minx: a[0], miny: a[1], maxx: a[0], maxy: a[1] }
+    }
+
+    pub fn new_from_pts(a: (f64, f64),b: (f64, f64)) -> MBR {
+        MBR::new( a[0], a[1], b[0], b[1])
     }
 
     ///Width of bounding box.
@@ -72,9 +82,9 @@ impl MBR {
     ///Compare equality of two bounding boxes
     pub fn equals(&self, other: &Self) -> bool {
         feq(self.maxx, other.maxx) &&
-        feq(self.maxy, other.maxy) &&
-        feq(self.minx, other.minx) &&
-        feq(self.miny, other.miny)
+            feq(self.maxy, other.maxy) &&
+            feq(self.minx, other.minx) &&
+            feq(self.miny, other.miny)
     }
 
     ///Checks if bounding box can be represented as a point, width and height as 0.
@@ -313,6 +323,7 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
 #[cfg(test)]
 mod mbr_tests {
     use super::MBR;
+
     #[test]
     fn test_mbr() {
         let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
