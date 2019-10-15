@@ -7,4 +7,5 @@ description = "Cartesian minimum bounding box - [bbox-2d is bounding-box-2d]"
 
 [dependencies]
 float-eq = { git = "https://github.com/intdxdt/float-eq", branch="master"}
+point = { git = "https://github.com/intdxdt/point", branch="master"}
 
