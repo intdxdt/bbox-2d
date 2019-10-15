@@ -13,18 +13,7 @@ pub struct MBR {
     pub maxy: f64,
 }
 
-impl Index<usize> for MBR {
-    type Output = f64;
-    fn index(&self, index: usize) -> &Self::Output {
-        match index {
-            0 => &self.minx,
-            1 => &self.miny,
-            2 => &self.maxx,
-            3 => &self.maxy,
-            _ => panic!("index out of bounds")
-        }
-    }
-}
+
 
 
 #[allow(dead_code)]
@@ -278,6 +267,19 @@ impl MBR {
         }
         let (dx, dy) = self._distance_dxdy(other);
         (dx * dx) + (dy * dy)
+    }
+}
+
+impl Index<usize> for MBR {
+    type Output = f64;
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.minx,
+            1 => &self.miny,
+            2 => &self.maxx,
+            3 => &self.maxy,
+            _ => panic!("index out of bounds")
+        }
     }
 }
 
