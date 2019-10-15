@@ -5,7 +5,7 @@ use std::ops::Index;
 use float_eq::feq;
 
 ///MBR
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct MBR {
     pub minx: f64,
     pub miny: f64,
@@ -35,12 +35,18 @@ impl MBR {
     }
 
     pub fn new_from_pt(a: (f64, f64)) -> MBR {
-        MBR { minx: a[0], miny: a[1], maxx: a[0], maxy: a[1] }
+        MBR { minx: a.0, miny: a.1, maxx: a.0, maxy: a.1 }
     }
 
-    pub fn new_from_pts(a: (f64, f64),b: (f64, f64)) -> MBR {
-        MBR::new( a[0], a[1], b[0], b[1])
+    pub fn new_from_pts(a: (f64, f64), b: (f64, f64)) -> MBR {
+        MBR::new(a.0, a.1, b.0, b.1)
     }
+
+    ///bounding box.
+    pub fn bbox(&self) -> &Self { self }
+
+    ///bounding box.
+    pub fn clone(&self) -> Self { *self }
 
     ///Width of bounding box.
     pub fn width(&self) -> f64 {
@@ -69,6 +75,11 @@ impl MBR {
         ]
     }
 
+    ///Lower left and upper right corners as an array [minx,miny, maxx,maxy]
+    pub fn as_array(&self) -> [f64; 4] {
+        [self.minx, self.miny, self.maxx, self.maxy]
+    }
+
     ///Lower left and upper right corners as a tuple (minx,miny, maxx,maxy)
     pub fn as_tuple(&self) -> (f64, f64, f64, f64) {
         (self.minx, self.miny, self.maxx, self.maxy)
@@ -89,25 +100,7 @@ impl MBR {
 
     ///Checks if bounding box can be represented as a point, width and height as 0.
     pub fn is_point(&self) -> bool {
-        feq(self.height(), 0.0) &&
-            feq(self.width(), 0.0)
-    }
-
-    ///contains x, y
-    pub fn contains_xy(&self, x: f64, y: f64) -> bool {
-        (x >= self.minx) &&
-            (x <= self.maxx) &&
-            (y >= self.miny) &&
-            (y <= self.maxy)
-    }
-
-    ///completely_contains_xy is true if mbr completely contains location with {x, y}
-    ///without touching boundaries
-    pub fn completely_contains_xy(&self, x: f64, y: f64) -> bool {
-        (x > self.minx) &&
-            (x < self.maxx) &&
-            (y > self.miny) &&
-            (y < self.maxy)
+        feq(self.height(), 0.0) && feq(self.width(), 0.0)
     }
 
     ///Contains bonding box
@@ -117,6 +110,13 @@ impl MBR {
             (other.miny >= self.miny) &&
             (other.maxx <= self.maxx) &&
             (other.maxy <= self.maxy)
+    }
+    ///contains x, y
+    pub fn contains_xy(&self, x: f64, y: f64) -> bool {
+        (x >= self.minx) &&
+            (x <= self.maxx) &&
+            (y >= self.miny) &&
+            (y <= self.maxy)
     }
 
     ///Completely contains bonding box
@@ -128,28 +128,32 @@ impl MBR {
             (other.maxy < self.maxy)
     }
 
+    ///completely_contains_xy is true if mbr completely contains location with {x, y}
+    ///without touching boundaries
+    pub fn completely_contains_xy(&self, x: f64, y: f64) -> bool {
+        (x > self.minx) &&
+            (x < self.maxx) &&
+            (y > self.miny) &&
+            (y < self.maxy)
+    }
+
+
     ///Translate bounding box by change in dx and dy.
     pub fn translate(&self, dx: f64, dy: f64) -> MBR {
-        MBR::new(
-            self.minx + dx, self.miny + dy,
-            self.maxx + dx, self.maxy + dy,
-        )
+        MBR::new(self.minx + dx, self.miny + dy, self.maxx + dx, self.maxy + dy)
     }
 
     ///Computes the center of minimum bounding box - (x, y)
     fn center(&self) -> (f64, f64) {
-        ((self.minx + self.maxx) / 2.0,
-         (self.miny + self.maxy) / 2.0)
+        ((self.minx + self.maxx) / 2.0, (self.miny + self.maxy) / 2.0)
     }
 
 
     ///Checks if bounding box intersects other
     pub fn intersects(&self, other: &Self) -> bool {
         //not disjoint
-        !(other.minx > self.maxx ||
-            other.maxx < self.minx ||
-            other.miny > self.maxy ||
-            other.maxy < self.miny)
+        !(other.minx > self.maxx || other.maxx < self.minx ||
+            other.miny > self.maxy || other.maxy < self.miny)
     }
 
     ///intersects point
