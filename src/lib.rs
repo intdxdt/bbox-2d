@@ -1,5 +1,4 @@
 use std::ops;
-use std::ops::Index;
 use float_eq::feq;
 use point::Point;
 
@@ -303,16 +302,15 @@ impl MBR {
     }
 }
 
-impl Index<usize> for MBR {
-    type Output = f64;
-    fn index(&self, index: usize) -> &Self::Output {
-        match index {
-            0 => &self.minx,
-            1 => &self.miny,
-            2 => &self.maxx,
-            3 => &self.maxy,
-            _ => panic!("index out of bounds")
-        }
+impl Eq for MBR {}
+
+impl PartialEq for MBR {
+    fn eq(&self, other: &Self) -> bool {
+        self.equals(other)
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.equals(other)
     }
 }
 
@@ -353,6 +351,7 @@ mod mbr_tests {
         let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
         let m = &m0 + &m1;
         println!("{:?}", m);
+        assert_eq!(m.minx, -0.5);
         assert_eq!(m.minx, -0.5);
         assert_eq!(m.miny, -0.2);
         assert_eq!(m.maxx, 2.0);
