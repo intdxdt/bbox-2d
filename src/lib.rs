@@ -1,7 +1,8 @@
 use std::ops;
-use float_eq::feq;
 use point::Point;
 use std::fmt::{Display, Formatter, Error};
+use std::cmp::Ordering;
+use math_util::{feq, round};
 
 ///MBR
 #[derive(Copy, Clone, Debug)]
@@ -307,13 +308,31 @@ impl PartialEq for MBR {
     fn eq(&self, other: &Self) -> bool {
         self.equals(other)
     }
+}
 
-    fn ne(&self, other: &Self) -> bool {
-        !self.equals(other)
+impl Ord for MBR {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let mut d = self.minx - other.minx;
+        if feq(d, 0.0) {
+            d = self.miny - other.miny;
+        }
+        if feq(d, 0.0) {
+            Ordering::Equal
+        } else if d < 0.0 {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
     }
 }
 
-impl Display for MBR{
+impl PartialOrd for MBR {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Display for MBR {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "{}", self.wkt())
     }
@@ -350,8 +369,9 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
 mod mbr_tests {
     use super::*;
 
+
     #[test]
-    fn test_mbr() {
+    fn test_construction() {
         let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
         let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
         let m = &m0 + &m1;
@@ -359,20 +379,130 @@ mod mbr_tests {
         assert_eq!(m, MBR::new(-0.5, -0.2, 2.0, 2.0));
 
         let m1 = MBR::new_raw(2.0, 2.0, -0.5, -0.2);
-        assert_eq!(m1, MBR{minx:2.0, miny:2.0, maxx:-0.5, maxy:-0.2});
+        assert_eq!(m1, MBR { minx: 2.0, miny: 2.0, maxx: -0.5, maxy: -0.2 });
 
         let m = MBR::new(2.0, 2.0, 0.5, 0.2);
-        assert_eq!(m, (MBR{minx: 0.5, miny: 0.2, maxx: 2.0, maxy: 2.0}));
+        assert_eq!(m, (MBR { minx: 0.5, miny: 0.2, maxx: 2.0, maxy: 2.0 }));
 
         assert_eq!((m.width(), m.height(), m.area(), m.is_point()), (1.5, 1.8, 1.5 * 1.8, false));
         assert_eq!(m.as_tuple(), (0.5, 0.2, 2.0, 2.0));
         assert_eq!(m.as_array(), [0.5, 0.2, 2.0, 2.0]);
 
         let b = m.as_poly_array();
-        assert_eq!((b[0], b[4], b.len()), (Point{x:0.5,y: 0.2}, Point{x:0.5,y: 0.2}, 5));
+        assert_eq!((b[0], b[4], b.len()), (Point { x: 0.5, y: 0.2 }, Point { x: 0.5, y: 0.2 }, 5));
 
         let m1 = m.clone();
-        assert_eq!((m1.equals(&m), m1.area()), (m1 == m , m.area()));
+        assert_eq!((m1.equals(&m), m1.area()), (m1 == m, m.area()));
         println!("{}", m.wkt());
+    }
+
+    #[test]
+    fn test_methods() {
+        let m = MBR::new(2.0, 2.0, 0.5, 0.2);
+        assert_eq!((m.width(), m.height(), m.area(), m.is_point()), (1.5, 1.8, 1.5 * 1.8, false));
+        assert_eq!((0.5, 0.2, 2.0, 2.0), m.as_tuple());
+
+        let b = m.as_poly_array();
+        let b0 = Point::new(0.5, 0.2);
+        let b1 = Point::new(0.5, 2.);
+        let b2 = Point::new(2., 2.);
+        let b3 = Point::new(2., 0.2);
+        let b4 = Point::new(0.5, 0.2);
+
+        assert_eq!(
+            (b.len(), b[0], b[1], b[2], b[3], b[4], b[0]), (5, b0, b1, b2, b3, b4, b4)
+        );
+
+        let mut m1 = m;
+        let m2 = m;
+        assert_eq!(m1.area(), m.area());
+        assert!(m1.equals(&m));
+        assert_eq!(m1, m);
+
+        assert_eq!(m2.area(), m.area());
+        assert!(m2.equals(&m));
+        assert_eq!(m2, m);
+        m1.minx = -1.;
+        assert_ne!(m2, m1);
+    }
+
+    #[test]
+    fn test_ops_1(){
+    let mut m00 = MBR::new_default ();
+    m00.expand_to_include_xy(2., 2.);
+
+    let mut n00 = MBR::new_default ();
+    n00.expand_to_include_xy(-2., -2.);
+
+    let mut  m0 = MBR::new (1., 1., 1., 1.);
+    m0.expand_by_delta(1., 1.);
+
+    let m1 = MBR::new( 0., 0., 2.,  2.);
+    let m2 = MBR::new( 4., 5., 8.,  9.);
+    let m4 = MBR::new( 5., 0., 8.,  2.);
+    let m5 = MBR::new( 5., 11., 8.,  9.);
+    let m6 = MBR::new( 0., 0., 2.,  -2.);
+    let m7 = MBR::new(-2., 1., 4.,  -2.);
+    let mut vects = vec![m1, m2, m4, m5, m6, m7];
+    vects.sort();
+
+
+    let m0123 = MBR::new (0., 2., 1., 3.);
+    let  clone_m0123 = m0123;
+
+    let  x1:usize = 0;
+    let  y1:usize = 1;
+
+
+        let r1 : [f64;4] = [0., 0., 2., 2.];
+        assert!(m1.as_array() == r1);
+        assert!(clone_m0123 == m0123);
+        assert!(m0.equals(&m1));
+        assert!(*m0.bbox() == m0);
+        assert!(m00.equals(&m1));
+        assert!(m1 != m2);
+
+
+        assert!(m00.intersects(&n00));
+        let nm00 = m00.intersection(&n00);
+        assert!(nm00.is_some());
+
+        let bln1 = nm00.unwrap().minx == 0.0 && nm00.unwrap().miny == 0.0;
+        let bln2 = nm00.unwrap().maxx == 0.0 && nm00.unwrap().maxy == 0.0;
+        assert!(bln1);
+        assert!(bln2);
+        assert!(nm00.unwrap().is_point());
+
+        assert!(!m1.intersects(&m2));
+        let null_mbr = m1.intersection(&m2);
+        assert!(null_mbr.is_none());
+
+        let  _m13 = [1.7, 1.5, 2., 2.];
+        let  _m23 = [4., 5., 5., 9.];
+
+
+        assert!(m2.intersects(&m5));
+        assert!(m7.intersects(&m6));
+        assert!(m6.intersects(&m7));
+
+        let m67 = m6.intersection(&m7);
+        let m76 = m7.intersection(&m6);
+
+        if m67.is_some() {
+            let  v = m67.unwrap();
+            assert!(v.area() > 0.0);
+        }
+
+        assert!(m67.unwrap().equals(&m6));
+        assert!(m67.unwrap().equals(&m76.unwrap()));
+
+        let m25 = m2.intersection(&m5);
+
+        assert_eq!(m25.unwrap().width(), m5.width());
+        assert_eq!(m25.unwrap().height(), 0.0);
+
+        let d = 2f64.hypot( 3.);
+        assert_eq!(m1.distance(&m2), d);
+        assert_eq!(m1.distance_square(&m2), round(d * d, 12));
     }
 }
