@@ -72,42 +72,52 @@ as an array
 ```rust
 as_array(&self) -> [f64; 4]
 ```
-
-Lower left and upper right corners as an array [minx,miny, maxx,maxy]
-
+bounds as **tuple** [minx,miny, maxx,maxy]
+```rust
 as_tuple(&self) -> (f64, f64, f64, f64)
+```
 
-Lower left and upper right corners as a tuple (minx,miny, maxx,maxy)
+lower left and upper right: Point(minx,miny)-Point(maxx,maxy)
 
+
+```rust
 llur(self) -> (Point, Point)
+```
 
-lower left and upper right as tuple ((minx,miny),(maxx,maxy))
-
+**equality** of two bounding boxes
+```rust
 equals(&self, other: &Self) -> bool
+```
 
-Compare equality of two bounding boxes
-
+is it a **point**, width and height as 0.
+```rust
 is_point(&self) -> bool
+```
 
-Checks if bounding box can be represented as a point, width and height as 0.
-
+check for **containment** of `other`
+```rust
 contains(&self, other: &Self) -> bool
+```
 
-Contains bonding box is true if mbr completely contains other, boundaries may touch
-
+**contains** `x`, `y`
+```rust
 contains_xy(&self, x: f64, y: f64) -> bool
+```
 
-contains x, y
-
+**completely contains** other 
+```rust
 completely_contains(&self, other: &Self) -> bool
+```
 
-Completely contains bonding box is true if mbr completely contains other without touching boundaries
-
+**completely contains** `x`, `y` 
+```rust
 completely_contains_xy(&self, x: f64, y: f64) -> bool
+```
 
-completely_contains_xy is true if mbr completely contains location with {x, y} without touching boundaries
-
+**translate** by `dx`, `dy`
+```rust
 translate(&self, dx: f64, dy: f64) -> MBR
+```
 
 Translate bounding box by change in dx and dy.
 
@@ -157,3 +167,6 @@ distance square computes the squared distance between bounding boxes
 
 wkt(&self) -> String
 
+
+## LIC 
+ MIT
