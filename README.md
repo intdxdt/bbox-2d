@@ -59,16 +59,19 @@ width(&self) -> f64
 height(&self) -> f64
 ```
 
-
+**area** of bounding box.
+```rust
 area(&self) -> f64
+```
 
-Computes area of bounding box.
-
+as a **closed** polygon coordinates
+```rust
 as_poly_array(&self) -> Vec<Point>
-
-Bounding box as a closed polygon array.
-
+```
+as an array 
+```rust
 as_array(&self) -> [f64; 4]
+```
 
 Lower left and upper right corners as an array [minx,miny, maxx,maxy]
 
