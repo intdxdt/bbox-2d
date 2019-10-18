@@ -119,54 +119,64 @@ completely_contains_xy(&self, x: f64, y: f64) -> bool
 translate(&self, dx: f64, dy: f64) -> MBR
 ```
 
-Translate bounding box by change in dx and dy.
-
+**intersects** other box
+```rust
 intersects(&self, other: &Self) -> bool
+```
 
-Checks if bounding box intersects other
-
+**intersects** point
+```rust
 intersects_point(&self, pt: &Point) -> bool
+```
 
-intersects point
-
+**intersects** `x, y`
+```rust
 intersects_xy(&self, x: f64, y: f64) -> bool
+```
 
-intersects point with x, y
-
+**intersects** bounds
+```rust
 intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool
+```
 
-Intersects bounds
-
+checks **disjoint** between boxes
+```rust
 disjoint(&self, m: &Self) -> bool
 
-Test for disjoint between two mbrs
-
+```
+**intersection** between boxes
+```rust
 intersection(&self, other: &Self) -> Option<MBR>
+```
 
-Computes the intersection of two bounding box
-
+**expand** to include other box
+```rust
 expand_to_include(&mut self, other: &Self) -> &mut MBR
+```
 
-Expand include other bounding box
-
+**expand** to include `x, y`
+```rust
 expand_to_include_xy(&mut self, x: f64, y: f64) -> &mut Self
+```
 
-Expand to include x,y
-
+**expand** by deltas : dx, dy (pad x and y dimension by dx and dy)
+```rust
 expand_by_delta(&mut self, dx: f64, dy: f64) -> &mut MBR
+```
 
-Expand by delta in x and y
-
+**distance** between boxes
+```rust
 distance(&self, other: &Self) -> f64
+```
 
-distance computes the distance between two mbrs
-
+**square** distance between boxes
+```rust
 distance_square(&self, other: &Self) -> f64
-
-distance square computes the squared distance between bounding boxes
-
+```
+**wkt** string 
+```rust
 wkt(&self) -> String
-
+```
 
 ## LIC 
  MIT
