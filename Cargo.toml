@@ -5,6 +5,10 @@ authors = ["Titus Tienaah <titus.intdxdt@gmail.com>"]
 edition = "2018"
 description = "Cartesian minimum bounding box - [bbox-2d is bounding-box-2d]"
 
+[[bin]]
+name = "01"
+path = "example/01.rs"
+
 [dependencies]
 point = { git = "https://github.com/intdxdt/point", branch="master"}
 math-util = { git = "https://github.com/intdxdt/math-util", branch="master"}
