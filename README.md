@@ -25,9 +25,13 @@ fn main() {
     
 }
 ```
-**Intersection** = `A & B`
+
+*Intersection = `A & B`*
+
 ![Example 01-intersection.rs](assets/01-intersection.jpg)
-**Union** =`A | B`
+
+*Union =`A | B`*
+
 ![Example 01-union.rs](assets/01-union.jpg)
 
 ## API
