@@ -22,9 +22,13 @@ fn main() {
     let union_a_b = &a | &b; //or the + operator 
     println!("area A={}, area B={}; A|B {}", a.area(), b.area(), union_a_b.area());
     //area A=22500, area B=15000; A|B 40000
+    
 }
 ```
-![Example 01.rs](assets/example_01.jpg)
+**Intersection** = `A & B`
+![Example 01-intersection.rs](assets/01-intersection.jpg)
+**Union** =`A | B`
+![Example 01-union.rs](assets/01-union.jpg)
 
 ## API
 ### Fields
