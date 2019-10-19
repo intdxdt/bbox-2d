@@ -20,8 +20,8 @@ fn main() {
     //area A=22500, area B=15000; A&B 5000
     //union
     let union_a_b = &a | &b; //or the + operator 
-    println!("area A={}, area B={}; A+B {}", a.area(), b.area(), union_a_b.area());
-    //area A=22500, area B=15000; A+B 40000
+    println!("area A={}, area B={}; A|B {}", a.area(), b.area(), union_a_b.area());
+    //area A=22500, area B=15000; A|B 40000
 }
 ```
 ![Example 01.rs](assets/example_01.jpg)
