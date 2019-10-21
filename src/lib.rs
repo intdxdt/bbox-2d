@@ -46,7 +46,7 @@ impl MBR {
 
     ///bounding box.
     #[inline]
-    pub fn clone(&self) -> Self { *self }
+    pub fn copy(&self) -> Self { *self }
 
     ///Width of bounding box.
     #[inline]
@@ -105,7 +105,7 @@ impl MBR {
     #[inline]
     pub fn is_point(&self) -> bool {
         let c = self.centre();
-        self.minx == c.x && self.miny == c.y
+        feq(self.minx, c.x) && feq(self.miny, c.y)
     }
 
     ///Contains bonding box
@@ -392,7 +392,7 @@ mod mbr_tests {
         let b = m.as_poly_array();
         assert_eq!((b[0], b[4], b.len()), (Point { x: 0.5, y: 0.2 }, Point { x: 0.5, y: 0.2 }, 5));
 
-        let m1 = m.clone();
+        let m1 = m.copy();
         assert_eq!((m1.equals(&m), m1.area()), (m1 == m, m.area()));
     }
 
@@ -486,8 +486,8 @@ mod mbr_tests {
         let m67 = m6.intersection(&m7);
         let m76 = m7.intersection(&m6);
 
-        if m67.is_some() {
-            let v = m67.unwrap();
+        if let Some(v) = m67 {
+//            let v = m67.unwrap();
             assert!(v.area() > 0.0);
         }
 
@@ -681,10 +681,8 @@ mod mbr_tests {
             Point::new(0., 0.), Point::new(0., 9.),
             Point::new(5., 9.), Point::new(5., 0.), Point::new(0., 0.));
         assert!(ma.as_array() == arr);  //ma modified by expand
-        let mut i = 0usize;
-        for &o in ma.as_poly_array().iter() {
-            assert_eq!(o, polyarr[i]); //ma modified by expand
-            i += 1;
+        for (i, &o) in ma.as_poly_array().iter().enumerate() {
+            assert_eq!(o, polyarr[i]);
         }
 
         arr = [1.7, 1.5, 5., 9.];

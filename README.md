@@ -102,9 +102,9 @@ new_from_bounds(a: Point, b: Point) -> MBR
 ```rust
 bbox(&self) -> &Self
 ```
-**clone** is copy of `self`
+**copy** copy of `self`
 ```rust
-clone(&self) -> Self
+copy(&self) -> Self
 ```
 **width** of bounding box.
 ```rust
