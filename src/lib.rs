@@ -1,11 +1,12 @@
-use std::ops;
-use point::Point;
-use std::fmt::{Display, Formatter, Error};
-use std::cmp::Ordering;
 use math_util::feq;
+use point::Point;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::fmt::{Display, Error, Formatter};
+use std::ops;
 
 ///MBR
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct MBR {
     pub minx: f64,
     pub miny: f64,
@@ -25,15 +26,34 @@ impl MBR {
     }
 
     pub fn new_raw(minx: f64, miny: f64, maxx: f64, maxy: f64) -> MBR {
-        MBR { minx, miny, maxx, maxy }
+        MBR {
+            minx,
+            miny,
+            maxx,
+            maxy,
+        }
     }
 
     pub fn new_default() -> MBR {
-        MBR { minx: 0.0, miny: 0.0, maxx: 0.0, maxy: 0.0 }
+        MBR {
+            minx: 0.0,
+            miny: 0.0,
+            maxx: 0.0,
+            maxy: 0.0,
+        }
+    }
+
+    pub fn new_from_array(o: [f64; 4]) -> MBR {
+        MBR::new(o[0], o[1], o[2], o[3])
     }
 
     pub fn new_from_pt(a: Point) -> MBR {
-        MBR { minx: a.x, miny: a.y, maxx: a.x, maxy: a.y }
+        MBR {
+            minx: a.x,
+            miny: a.y,
+            maxx: a.x,
+            maxy: a.y,
+        }
     }
     ///New bbox from lower left point(a) and upper right point(b)
     pub fn new_from_bounds(a: Point, b: Point) -> MBR {
@@ -42,11 +62,15 @@ impl MBR {
 
     ///bounding box.
     #[inline]
-    pub fn bbox(&self) -> &Self { self }
+    pub fn bbox(&self) -> &Self {
+        self
+    }
 
     ///bounding box.
     #[inline]
-    pub fn copy(&self) -> Self { *self }
+    pub fn copy(&self) -> Self {
+        *self
+    }
 
     ///Width of bounding box.
     #[inline]
@@ -60,7 +84,6 @@ impl MBR {
         self.maxy - self.miny
     }
 
-
     ///Computes area of bounding box.
     #[inline]
     pub fn area(&self) -> f64 {
@@ -70,11 +93,26 @@ impl MBR {
     ///Bounding box as a closed polygon array.
     pub fn as_poly_array(&self) -> Vec<Point> {
         vec![
-            Point { x: self.minx, y: self.miny },
-            Point { x: self.minx, y: self.maxy },
-            Point { x: self.maxx, y: self.maxy },
-            Point { x: self.maxx, y: self.miny },
-            Point { x: self.minx, y: self.miny },
+            Point {
+                x: self.minx,
+                y: self.miny,
+            },
+            Point {
+                x: self.minx,
+                y: self.maxy,
+            },
+            Point {
+                x: self.maxx,
+                y: self.maxy,
+            },
+            Point {
+                x: self.maxx,
+                y: self.miny,
+            },
+            Point {
+                x: self.minx,
+                y: self.miny,
+            },
         ]
     }
 
@@ -91,14 +129,25 @@ impl MBR {
     ///lower left and upper right as tuple ((minx,miny),(maxx,maxy))
     #[inline]
     pub fn llur(self) -> (Point, Point) {
-        (Point { x: self.minx, y: self.miny }, Point { x: self.maxx, y: self.maxy })
+        (
+            Point {
+                x: self.minx,
+                y: self.miny,
+            },
+            Point {
+                x: self.maxx,
+                y: self.maxy,
+            },
+        )
     }
 
     ///Compare equality of two bounding boxes
     #[inline]
     pub fn equals(&self, other: &Self) -> bool {
-        feq(self.maxx, other.maxx) && feq(self.maxy, other.maxy) &&
-            feq(self.minx, other.minx) && feq(self.miny, other.miny)
+        feq(self.maxx, other.maxx)
+            && feq(self.maxy, other.maxy)
+            && feq(self.minx, other.minx)
+            && feq(self.miny, other.miny)
     }
 
     ///Checks if bounding box can be represented as a point, width and height as 0.
@@ -112,59 +161,61 @@ impl MBR {
     ///is true if mbr completely contains other, boundaries may touch
     #[inline]
     pub fn contains(&self, other: &Self) -> bool {
-        (other.minx >= self.minx) &&
-            (other.miny >= self.miny) &&
-            (other.maxx <= self.maxx) &&
-            (other.maxy <= self.maxy)
+        (other.minx >= self.minx)
+            && (other.miny >= self.miny)
+            && (other.maxx <= self.maxx)
+            && (other.maxy <= self.maxy)
     }
     ///contains x, y
     #[inline]
     pub fn contains_xy(&self, x: f64, y: f64) -> bool {
-        (x >= self.minx) &&
-            (x <= self.maxx) &&
-            (y >= self.miny) &&
-            (y <= self.maxy)
+        (x >= self.minx) && (x <= self.maxx) && (y >= self.miny) && (y <= self.maxy)
     }
 
     ///Completely contains bonding box
     ///is true if mbr completely contains other without touching boundaries
     #[inline]
     pub fn completely_contains(&self, other: &Self) -> bool {
-        (other.minx > self.minx) &&
-            (other.miny > self.miny) &&
-            (other.maxx < self.maxx) &&
-            (other.maxy < self.maxy)
+        (other.minx > self.minx)
+            && (other.miny > self.miny)
+            && (other.maxx < self.maxx)
+            && (other.maxy < self.maxy)
     }
 
     ///completely_contains_xy is true if mbr completely contains location with {x, y}
     ///without touching boundaries
     #[inline]
     pub fn completely_contains_xy(&self, x: f64, y: f64) -> bool {
-        (x > self.minx) &&
-            (x < self.maxx) &&
-            (y > self.miny) &&
-            (y < self.maxy)
+        (x > self.minx) && (x < self.maxx) && (y > self.miny) && (y < self.maxy)
     }
-
 
     ///Translate bounding box by change in dx and dy.
     pub fn translate(&self, dx: f64, dy: f64) -> MBR {
-        MBR::new(self.minx + dx, self.miny + dy, self.maxx + dx, self.maxy + dy)
+        MBR::new(
+            self.minx + dx,
+            self.miny + dy,
+            self.maxx + dx,
+            self.maxy + dy,
+        )
     }
 
     ///Computes the center of minimum bounding box - (x, y)
     #[inline]
     fn centre(&self) -> Point {
-        Point { x: (self.minx + self.maxx) / 2.0, y: (self.miny + self.maxy) / 2.0 }
+        Point {
+            x: (self.minx + self.maxx) / 2.0,
+            y: (self.miny + self.maxy) / 2.0,
+        }
     }
-
 
     ///Checks if bounding box intersects other
     #[inline]
     pub fn intersects(&self, other: &Self) -> bool {
         //not disjoint
-        !(other.minx > self.maxx || other.maxx < self.minx ||
-            other.miny > self.maxy || other.maxy < self.miny)
+        !(other.minx > self.maxx
+            || other.maxx < self.minx
+            || other.miny > self.maxy
+            || other.maxy < self.miny)
     }
 
     ///intersects point
@@ -205,12 +256,33 @@ impl MBR {
         if !self.intersects(other) {
             return None;
         }
-        let minx = if self.minx > other.minx { self.minx } else { other.minx };
-        let miny = if self.miny > other.miny { self.miny } else { other.miny };
-        let maxx = if self.maxx < other.maxx { self.maxx } else { other.maxx };
-        let maxy = if self.maxy < other.maxy { self.maxy } else { other.maxy };
+        let minx = if self.minx > other.minx {
+            self.minx
+        } else {
+            other.minx
+        };
+        let miny = if self.miny > other.miny {
+            self.miny
+        } else {
+            other.miny
+        };
+        let maxx = if self.maxx < other.maxx {
+            self.maxx
+        } else {
+            other.maxx
+        };
+        let maxy = if self.maxy < other.maxy {
+            self.maxy
+        } else {
+            other.maxy
+        };
 
-        Some(MBR { minx, miny, maxx, maxy })
+        Some(MBR {
+            minx,
+            miny,
+            maxx,
+            maxy,
+        })
     }
 
     ///Expand include other bounding box
@@ -239,7 +311,6 @@ impl MBR {
         self
     }
 
-
     ///Expand by delta in x and y
     pub fn expand_by_delta(&mut self, dx: f64, dy: f64) -> &mut MBR {
         let (minx, miny) = (self.minx - dx, self.miny - dy);
@@ -252,7 +323,6 @@ impl MBR {
 
         self
     }
-
 
     ///computes dx and dy for computing hypot
     fn distance_dxdy(&self, other: &Self) -> (f64, f64) {
@@ -296,10 +366,14 @@ impl MBR {
         (dx * dx) + (dy * dy)
     }
 
-
     pub fn wkt(&self) -> String {
-        format!("POLYGON (({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
-                lx = self.minx, ly = self.miny, ux = self.maxx, uy = self.maxy)
+        format!(
+            "POLYGON (({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
+            lx = self.minx,
+            ly = self.miny,
+            ux = self.maxx,
+            uy = self.maxy
+        )
     }
 }
 
@@ -371,7 +445,6 @@ mod mbr_tests {
     use super::*;
     use math_util::round;
 
-
     #[test]
     fn test_construction() {
         let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
@@ -380,17 +453,39 @@ mod mbr_tests {
         assert_eq!(m, MBR::new(-0.5, -0.2, 2.0, 2.0));
 
         let m1 = MBR::new_raw(2.0, 2.0, -0.5, -0.2);
-        assert_eq!(m1, MBR { minx: 2.0, miny: 2.0, maxx: -0.5, maxy: -0.2 });
+        assert_eq!(
+            m1,
+            MBR {
+                minx: 2.0,
+                miny: 2.0,
+                maxx: -0.5,
+                maxy: -0.2,
+            }
+        );
 
         let m = MBR::new(2.0, 2.0, 0.5, 0.2);
-        assert_eq!(m, (MBR { minx: 0.5, miny: 0.2, maxx: 2.0, maxy: 2.0 }));
+        assert_eq!(
+            m,
+            (MBR {
+                minx: 0.5,
+                miny: 0.2,
+                maxx: 2.0,
+                maxy: 2.0,
+            })
+        );
 
-        assert_eq!((m.width(), m.height(), m.area(), m.is_point()), (1.5, 1.8, 1.5 * 1.8, false));
+        assert_eq!(
+            (m.width(), m.height(), m.area(), m.is_point()),
+            (1.5, 1.8, 1.5 * 1.8, false)
+        );
         assert_eq!(m.as_tuple(), (0.5, 0.2, 2.0, 2.0));
         assert_eq!(m.as_array(), [0.5, 0.2, 2.0, 2.0]);
 
         let b = m.as_poly_array();
-        assert_eq!((b[0], b[4], b.len()), (Point { x: 0.5, y: 0.2 }, Point { x: 0.5, y: 0.2 }, 5));
+        assert_eq!(
+            (b[0], b[4], b.len()),
+            (Point { x: 0.5, y: 0.2 }, Point { x: 0.5, y: 0.2 }, 5)
+        );
 
         let m1 = m.copy();
         assert_eq!((m1.equals(&m), m1.area()), (m1 == m, m.area()));
@@ -399,7 +494,10 @@ mod mbr_tests {
     #[test]
     fn test_methods() {
         let m = MBR::new(2.0, 2.0, 0.5, 0.2);
-        assert_eq!((m.width(), m.height(), m.area(), m.is_point()), (1.5, 1.8, 1.5 * 1.8, false));
+        assert_eq!(
+            (m.width(), m.height(), m.area(), m.is_point()),
+            (1.5, 1.8, 1.5 * 1.8, false)
+        );
         assert_eq!((0.5, 0.2, 2.0, 2.0), m.as_tuple());
 
         let b = m.as_poly_array();
@@ -410,7 +508,8 @@ mod mbr_tests {
         let b4 = Point::new(0.5, 0.2);
 
         assert_eq!(
-            (b.len(), b[0], b[1], b[2], b[3], b[4], b[0]), (5, b0, b1, b2, b3, b4, b4)
+            (b.len(), b[0], b[1], b[2], b[3], b[4], b[0]),
+            (5, b0, b1, b2, b3, b4, b4)
         );
 
         let mut m1 = m;
@@ -447,10 +546,8 @@ mod mbr_tests {
         let mut vects = vec![m1, m2, m4, m5, m6, m7, m3];
         vects.sort();
 
-
         let m0123 = MBR::new(0., 2., 1., 3.);
         let clone_m0123 = m0123;
-
 
         let r1: [f64; 4] = [0., 0., 2., 2.];
         assert!(m1.as_array() == r1);
@@ -459,7 +556,6 @@ mod mbr_tests {
         assert_eq!(*m0.bbox(), m0);
         assert!(m00.equals(&m1));
         assert_ne!(m1, m2);
-
 
         assert!(m00.intersects(&n00));
         let nm00 = m00.intersection(&n00);
@@ -478,7 +574,6 @@ mod mbr_tests {
         let _m13 = [1.7, 1.5, 2., 2.];
         let _m23 = [4., 5., 5., 9.];
 
-
         assert!(m2.intersects(&m5));
         assert!(m7.intersects(&m6));
         assert!(m6.intersects(&m7));
@@ -487,7 +582,7 @@ mod mbr_tests {
         let m76 = m7.intersection(&m6);
 
         if let Some(v) = m67 {
-//            let v = m67.unwrap();
+            //            let v = m67.unwrap();
             assert!(v.area() > 0.0);
         }
 
@@ -538,7 +633,6 @@ mod mbr_tests {
         let m0123 = MBR::new(0., 2., 1., 3.);
         let clone_m0123 = m0123;
 
-
         //SECTION (Constructs)
         assert_ne!(m0, m0_pt);
         assert_eq!(m0.llur().0, Point::new(0., 0.));
@@ -559,7 +653,7 @@ mod mbr_tests {
         assert!(m00.equals(&m1));
         assert_ne!(m1, m2);
 
-//    SECTION("intersects , distance") 
+        //    SECTION("intersects , distance")
         assert!(m1.intersects_xy(p.x, p.y));
         assert!(m1.intersects_xy(p0.x, p0.y));
         assert!(m1.intersects_point(&p));
@@ -617,13 +711,29 @@ mod mbr_tests {
         assert_eq!(m1.distance(&m3), 0.0);
         assert_eq!(m1.distance_square(&m3), 0.0);
 
-        let a = MBR::new(-7.703505430214746, 3.0022503796012305, -5.369812194018422, 5.231449888803689);
-        assert_eq!(m1.distance(&a), (-5.369812194018422f64).hypot(3.0022503796012305 - 2.));
+        let a = MBR::new_from_array([
+            -7.703505430214746,
+            3.0022503796012305,
+            -5.369812194018422,
+            5.231449888803689,
+        ]);
+        assert_eq!(
+            m1.distance(&a),
+            (-5.369812194018422f64).hypot(3.0022503796012305 - 2.)
+        );
 
-        let b = MBR::new(-4.742849832055231, -4.1033230559816065, -1.9563504455521576, -2.292098454754609);
-        assert_eq!(m1.distance(&b), (-1.9563504455521576f64).hypot(-2.292098454754609));
+        let b = MBR::new(
+            -4.742849832055231,
+            -4.1033230559816065,
+            -1.9563504455521576,
+            -2.292098454754609,
+        );
+        assert_eq!(
+            m1.distance(&b),
+            (-1.9563504455521576f64).hypot(-2.292098454754609)
+        );
 
-//    SECTION("contains, disjoint , contains completely") 
+        //    SECTION("contains, disjoint , contains completely")
         let p1 = Point::new(-5.95, 9.28);
         let p2 = Point::new(-0.11, 12.56);
         let p3 = Point::new(3.58, 11.79);
@@ -635,7 +745,9 @@ mod mbr_tests {
         // intersects but segment are disjoint
         assert!(mp12.intersects(&mp34));
         assert!(mp12.intersects_bounds(&p3, &p4));
-        assert!(!mp12.intersects_bounds(&Point::new(m1.minx, m1.miny), &Point::new(m1.maxx, m1.maxy)));
+        assert!(
+            !mp12.intersects_bounds(&Point::new(m1.minx, m1.miny), &Point::new(m1.maxx, m1.maxy))
+        );
         assert!(!mp12.intersects_xy(p3.x, p3.y));
         assert!(m1.contains_xy(1., 1.));
 
@@ -647,7 +759,7 @@ mod mbr_tests {
         assert!(m1.contains(&mbr11));
         assert!(m1.contains(&mbr12));
         assert!(!m1.contains(&mbr13));
-        assert!(!m1.disjoint(&mbr13));// False
+        assert!(!m1.disjoint(&mbr13)); // False
         assert!(m1.disjoint(&mbr14)); // True disjoint
 
         assert!(m1.contains_xy(1.5, 1.5));
@@ -660,8 +772,7 @@ mod mbr_tests {
         assert!(!m1.completely_contains(&mbr12));
         assert!(!m1.completely_contains(&mbr13));
 
-
-//    SECTION("translate, expand by, area")
+        //    SECTION("translate, expand by, area")
         let mut ma = MBR::new(0., 0., 2., 2.);
         let mb = MBR::new(-1., -1., 1.5, 1.9);
         let mc = MBR::new(1.7, 1.5, 5., 9.);
@@ -677,10 +788,14 @@ mod mbr_tests {
         assert!(md.equals(&md_mb));
 
         let mut arr = [0., 0., 5., 9.];
-        let polyarr = vec!(
-            Point::new(0., 0.), Point::new(0., 9.),
-            Point::new(5., 9.), Point::new(5., 0.), Point::new(0., 0.));
-        assert!(ma.as_array() == arr);  //ma modified by expand
+        let polyarr = vec![
+            Point::new(0., 0.),
+            Point::new(0., 9.),
+            Point::new(5., 9.),
+            Point::new(5., 0.),
+            Point::new(0., 0.),
+        ];
+        assert!(ma.as_array() == arr); //ma modified by expand
         for (i, &o) in ma.as_poly_array().iter().enumerate() {
             assert_eq!(o, polyarr[i]);
         }
@@ -688,7 +803,7 @@ mod mbr_tests {
         arr = [1.7, 1.5, 5., 9.];
         assert!(mc.as_array() == arr); //should not be touched
         arr = [-1., -1., 2., 2.];
-        assert!(md.as_array() == arr);//ma modified by expand
+        assert!(md.as_array() == arr); //ma modified by expand
 
         //mc area
         assert_eq!(mc.area(), 24.75);
@@ -709,9 +824,11 @@ mod mbr_tests {
         arr = [-1., -1., 3., 3.];
         assert!(mby.as_array() == arr);
 
-
-//    SECTION("wkt string")
+        //    SECTION("wkt string")
         assert_eq!(m1.wkt(), "POLYGON ((0 0,0 2,2 2,2 0,0 0))".to_string());
-        assert_eq!(format!("{}", m1), "POLYGON ((0 0,0 2,2 2,2 0,0 0))".to_string());
+        assert_eq!(
+            format!("{}", m1),
+            "POLYGON ((0 0,0 2,2 2,2 0,0 0))".to_string()
+        );
     }
 }
