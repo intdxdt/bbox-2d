@@ -1,5 +1,6 @@
 use math_util::feq;
 use point::Point;
+use rstar::{RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
@@ -377,6 +378,10 @@ impl MBR {
     }
 }
 
+pub trait BBox {
+    fn bbox(&self) -> &MBR;
+}
+
 impl Eq for MBR {}
 
 impl PartialEq for MBR {
@@ -439,16 +444,42 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
     }
 }
 
+impl RTreeObject for MBR {
+    type Envelope = AABB<[f64; 2]>;
+
+    fn envelope(&self) -> Self::Envelope {
+        AABB::from_corners([self.minx, self.miny], [self.maxx, self.maxy])
+    }
+}
+
+impl BBox for MBR {
+    fn bbox(&self) -> &MBR {
+        return self.bbox();
+    }
+}
+
 //Todo: complete test with coverage
 #[cfg(test)]
 mod mbr_tests {
     use super::*;
     use math_util::round;
+    use rstar::Envelope;
+    use serde_json;
 
     #[test]
     fn test_construction() {
         let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
         let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
+
+        let serialized = serde_json::to_string(&m1).unwrap();
+
+        assert_eq!(
+            serialized,
+            "{\"minx\":-0.5,\"miny\":-0.2,\"maxx\":2.0,\"maxy\":2.0}".to_string()
+        );
+        assert_eq!(m0.envelope().area(), m0.area());
+        assert_eq!(m1.envelope().area(), m1.area());
+
         let m = &m0 + &m1;
         assert_eq!(m, MBR::new(-0.5, -0.2, 2.0, 2.0));
 
