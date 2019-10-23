@@ -1,6 +1,6 @@
 use math_util::feq;
 use point::Point;
-use rstar::{RTreeObject, AABB};
+use rstar::{PointDistance, RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
@@ -127,10 +127,10 @@ impl MBR {
         (self.minx, self.miny, self.maxx, self.maxy)
     }
 
-    ///lower left and upper right as tuple ((minx,miny),(maxx,maxy))
+    ///lower left and upper right as tuple [Point(minx,miny),Point(maxx,maxy)]
     #[inline]
-    pub fn llur(self) -> (Point, Point) {
-        (
+    pub fn llur(self) -> [Point; 2] {
+        [
             Point {
                 x: self.minx,
                 y: self.miny,
@@ -139,7 +139,25 @@ impl MBR {
                 x: self.maxx,
                 y: self.maxy,
             },
-        )
+        ]
+    }
+
+    ///lower left - Point(minx,miny)
+    #[inline]
+    pub fn ll(self) -> Point {
+        Point {
+            x: self.minx,
+            y: self.miny,
+        }
+    }
+
+    ///upper right - Point(maxx,maxy)
+    #[inline]
+    pub fn ur(self) -> Point {
+        Point {
+            x: self.maxx,
+            y: self.maxy,
+        }
     }
 
     ///Compare equality of two bounding boxes
@@ -452,6 +470,12 @@ impl RTreeObject for MBR {
     }
 }
 
+impl PointDistance for MBR {
+    fn distance_2(&self, pt: &[f64; 2]) -> f64 {
+        self.distance_square(&MBR::new(pt[0], pt[1], pt[0], pt[1]))
+    }
+}
+
 impl BBox for MBR {
     fn bbox(&self) -> &MBR {
         return self.bbox();
@@ -574,6 +598,7 @@ mod mbr_tests {
         let m5 = MBR::new(5., 11., 8., 9.);
         let m6 = MBR::new(0., 0., 2., -2.);
         let m7 = MBR::new(-2., 1., 4., -2.);
+        let m8 = MBR::new(4., 2., 4., 2.);
         let mut vects = vec![m1, m2, m4, m5, m6, m7, m3];
         vects.sort();
 
@@ -585,6 +610,7 @@ mod mbr_tests {
         assert_eq!(clone_m0123, m0123);
         assert!(m0.equals(&m1));
         assert_eq!(*m0.bbox(), m0);
+        assert_eq!((&m0 as &dyn BBox).bbox(), m0.bbox());
         assert!(m00.equals(&m1));
         assert_ne!(m1, m2);
 
@@ -628,6 +654,8 @@ mod mbr_tests {
         let d = 2f64.hypot(3.);
         assert_eq!(m1.distance(&m2), d);
         assert_eq!(m1.distance_square(&m2), round(d * d, 12));
+        assert_eq!(m1.distance_2(&m8.ll().as_array()), m1.distance_square(&m8));
+        assert_eq!(m1.distance_2(&m8.ur().as_array()), m1.distance_square(&m8));
     }
 
     #[test]
@@ -666,8 +694,10 @@ mod mbr_tests {
 
         //SECTION (Constructs)
         assert_ne!(m0, m0_pt);
-        assert_eq!(m0.llur().0, Point::new(0., 0.));
-        assert_eq!(m0.llur().1, Point::new(2., 2.));
+        assert_eq!(m0.llur()[0], Point::new(0., 0.));
+        assert_eq!(m0.llur()[0], m0.ll());
+        assert_eq!(m0.llur()[1], Point::new(2., 2.));
+        assert_eq!(m0.llur()[1], m0.ur());
         m0_pt.expand_to_include_xy(2., 2.);
         assert_eq!(m0, m0_pt);
         assert_eq!(m0.llur(), m0_pt.llur());
