@@ -23,18 +23,22 @@ impl MBR {
             ur: ll.max_of_bounds(&ur),
         }
     }
+
     ///New MBR as given ll & ur
     pub fn new_raw(ll: Point, ur: Point) -> MBR {
         MBR { ll, ur }
     }
+
     ///New MBR from zero value
     pub fn new_default() -> MBR {
         MBR::new_raw(Point::new_origin(), Point::new_origin())
     }
+
     ///New MBR from array of 4 coordinates [x1, y1, x2, y2]
     pub fn new_from_array(o: [f64; 4]) -> MBR {
         MBR::new(o[0..2].into(), o[2..4].into())
     }
+
     ///New MBR from point
     pub fn new_from_pt(a: Point) -> MBR {
         MBR::new_raw(a, a)
@@ -151,7 +155,7 @@ impl MBR {
 
     ///Computes the center of minimum bounding box - (x, y)
     #[inline]
-    fn centre(&self) -> Point {
+    pub fn centre(&self) -> Point {
         Point {
             x: (self.ll.x + self.ur.x) / 2.0,
             y: (self.ll.y + self.ur.y) / 2.0,
@@ -179,6 +183,7 @@ impl MBR {
     pub fn intersects_xy(&self, x: f64, y: f64) -> bool {
         self.contains_xy(x, y)
     }
+
     /// Intersects bounds
     pub fn intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool {
         let minq = pt1.x.min(pt2.x);
@@ -273,7 +278,7 @@ impl MBR {
     }
 
     ///computes dx and dy for computing hypot
-    fn distance_dxdy(&self, other: &Self) -> (f64, f64) {
+    pub fn distance_dxdy(&self, other: &Self) -> (f64, f64) {
         let mut dx = 0.0;
         let mut dy = 0.0;
 
@@ -314,6 +319,7 @@ impl MBR {
         (dx * dx) + (dy * dy)
     }
 
+    ///WKT string
     pub fn wkt(&self) -> String {
         format!(
             "POLYGON (({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
@@ -325,18 +331,22 @@ impl MBR {
     }
 }
 
+///Bounding Box Trait
 pub trait BBox {
     fn bbox(&self) -> &MBR;
 }
 
+///Eq for MBR
 impl Eq for MBR {}
 
+///PartialEq for MBR
 impl PartialEq for MBR {
     fn eq(&self, other: &Self) -> bool {
         self.equals(other)
     }
 }
 
+///Ord for MBR
 impl Ord for MBR {
     fn cmp(&self, other: &Self) -> Ordering {
         let mut d = self.ll.x - other.ll.x;
@@ -353,18 +363,21 @@ impl Ord for MBR {
     }
 }
 
+///PartialOrd for MBR
 impl PartialOrd for MBR {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
+///Display for MBR
 impl Display for MBR {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "{}", self.wkt())
     }
 }
 
+///ops::BitAnd for MBR
 impl<'a, 'b> ops::BitAnd<&'b MBR> for &'a MBR {
     type Output = Option<MBR>;
     fn bitand(self, rhs: &'b MBR) -> Self::Output {
@@ -372,6 +385,7 @@ impl<'a, 'b> ops::BitAnd<&'b MBR> for &'a MBR {
     }
 }
 
+///ops::BitOr for MBR
 impl<'a, 'b> ops::BitOr<&'b MBR> for &'a MBR {
     type Output = MBR;
     fn bitor(self, rhs: &'b MBR) -> Self::Output {
@@ -379,6 +393,7 @@ impl<'a, 'b> ops::BitOr<&'b MBR> for &'a MBR {
     }
 }
 
+///ops::Add for MBR
 impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
     type Output = MBR;
     fn add(self, rhs: &'b MBR) -> MBR {
@@ -389,21 +404,23 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
     }
 }
 
+///RTreeObject for MBR
 impl RTreeObject for MBR {
-    type Envelope = AABB<[f64; 2]>;
+    type Envelope = AABB<Point>;
 
     fn envelope(&self) -> Self::Envelope {
-        AABB::from_corners([self.ll.x, self.ll.y], [self.ur.x, self.ur.y])
+        AABB::from_corners(self.ll, self.ur)
     }
 }
 
+///PointDistance for MBR
 impl PointDistance for MBR {
-    fn distance_2(&self, pt: &[f64; 2]) -> f64 {
-        let p: Point = (*pt).into();
-        self.distance_square(&MBR::new_raw(p, p))
+    fn distance_2(&self, pt: &Point) -> f64 {
+        self.distance_square(&MBR::new_raw(*pt, *pt))
     }
 }
 
+///BBox for MBR
 impl BBox for MBR {
     fn bbox(&self) -> &MBR {
         return self.bbox();

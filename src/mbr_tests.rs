@@ -149,7 +149,6 @@ fn test_ops_1() {
     let m76 = m7.intersection(&m6);
 
     if let Some(v) = m67 {
-        //            let v = m67.unwrap();
         assert!(v.area() > 0.0);
     }
 
@@ -164,8 +163,8 @@ fn test_ops_1() {
     let d = 2f64.hypot(3.);
     assert_eq!(m1.distance(&m2), d);
     assert_eq!(m1.distance_square(&m2), round(d * d, 12));
-    assert_eq!(m1.distance_2(&m8.ll.as_array()), m1.distance_square(&m8));
-    assert_eq!(m1.distance_2(&m8.ur.as_array()), m1.distance_square(&m8));
+    assert_eq!(m1.distance_2(&m8.ll), m1.distance_square(&m8));
+    assert_eq!(m1.distance_2(&m8.ur), m1.distance_square(&m8));
 }
 
 #[test]

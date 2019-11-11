@@ -6,10 +6,10 @@ Minimum bounding rectangle (**MBR**)- axis aligned rectangle in 2d space.
 [INFO tarpaulin] Coverage Results:
 || Uncovered Lines:
 || Tested/Total Lines:
-|| src/lib.rs: 177/177
-|| src/mbr_tests.rs: 272/272
+|| src/lib.rs: 176/176
+|| src/mbr_tests.rs: 275/275
 || 
-100.00% coverage, 449/449 lines covered 
+100.00% coverage, 451/451 lines covered
 ```
 
 ## Examples 
