@@ -2,8 +2,8 @@
 name = "bbox-2d"
 version = "0.1.0"
 authors = ["Titus Tienaah <titus.intdxdt@gmail.com>"]
-edition = "2018"
 description = "Cartesian minimum bounding box - [bbox-2d is bounding-box-2d]"
+edition="2018"
 
 [[bin]]
 name = "01"
@@ -11,6 +11,7 @@ path = "example/01.rs"
 
 [dependencies]
 point = { git = "https://github.com/intdxdt/point", branch="master"}
+coordinate = { git = "https://github.com/intdxdt/coordinate", branch="master"}
 math-util = { git = "https://github.com/intdxdt/math-util", branch="master"}
 serde =   { version = "1.0.101", features = ["derive"] }
 rstar = "0.5.1"
