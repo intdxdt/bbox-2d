@@ -12,7 +12,7 @@ fn test_construction() {
 
     assert_eq!(
         serialized,
-        String::from(r"#{"minx":-0.5,"miny":-0.2,"maxx":2.0,"maxy":2.0}#")
+        String::from(r#"{"minx":-0.5,"miny":-0.2,"maxx":2.0,"maxy":2.0}"#)
     );
     assert_eq!(m0.envelope().area(), m0.area());
     assert_eq!(m1.envelope().area(), m1.area());
