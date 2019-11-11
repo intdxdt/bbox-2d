@@ -74,173 +74,187 @@ fn main() {
 ## API
 ### Fields
 ```rust
-struct MBR{
-    minx: f64,
-    miny: f64,
-    maxx: f64,
-    maxy: f64,
+struct MBR {
+    pub ll: Point,
+    pub ur: Point
 }
 ```
 
 ### Constructors 
-```rust 
-new(x1: f64, y1: f64, x2: f64, y2: f64) -> MBR
-```
+New MBR given ll & ur
 ```rust
-//constructs MBR as provided params  
-new_raw(minx: f64, miny: f64, maxx: f64, maxy: f64) -> MBR
-```
-```rust
-//origin (0, 0, 0, 0)
-new_default() -> MBR
+fn new(ll: Point, ur: Point) -> MBR
 ```
 
+New MBR as given ll & ur  
 ```rust
-//MBR from point a(x, y)
-new_from_pt(a: Point) -> MBR
+fn new_raw(ll: Point, ur: Point) -> MBR
 ```
 
+New MBR from zero value
 ```rust
-//MBR bounded by two points a(x, y) and b(x, y)
-new_from_bounds(a: Point, b: Point) -> MBR
+fn new_default() -> MBR
+```
+
+New MBR from point
+```rust
+fn new_from_pt(a: Point) -> MBR
+```
+
+New MBR from array of 4 coordinates [x1, y1, x2, y2]
+```rust
+fn new_from_array(o: [f64; 4]) -> MBR
 ```
 
 ### Methods
 **bbox** is reference to `self`
 ```rust
-bbox(&self) -> &Self
+fn bbox(&self) -> &Self
 ```
+
 **copy** copy of `self`
 ```rust
-copy(&self) -> Self
+fn copy(&self) -> Self
 ```
+
 **width** of bounding box.
 ```rust
-width(&self) -> f64
-
+fn width(&self) -> f64
 ```
+
 **height** of bounding box.
 ```rust
-height(&self) -> f64
+fn height(&self) -> f64
 ```
 
 **area** of bounding box.
 ```rust
-area(&self) -> f64
+fn area(&self) -> f64
 ```
 
 as a **closed** polygon coordinates
 ```rust
-as_poly_array(&self) -> Vec<Point>
+fn as_poly_array(&self) -> Vec<Point>
 ```
+
 as an array 
 ```rust
-as_array(&self) -> [f64; 4]
+fn as_array(&self) -> [f64; 4]
 ```
+
 bounds as **tuple** [minx,miny, maxx,maxy]
 ```rust
-as_tuple(&self) -> (f64, f64, f64, f64)
+fn as_tuple(&self) -> (f64, f64, f64, f64)
 ```
 
-lower left and upper right: Point(minx,miny)-Point(maxx,maxy)
-
-
+Lower left and upper right: Point(minx,miny)-Point(maxx,maxy)
 ```rust
-llur(self) -> (Point, Point)
+fn llur(self) -> [Point; 2]
 ```
 
 **equality** of two bounding boxes
 ```rust
-equals(&self, other: &Self) -> bool
+fn equals(&self, other: &Self) -> bool
 ```
 
 is it a **point**, width and height as 0.
 ```rust
-is_point(&self) -> bool
+fn is_point(&self) -> bool
 ```
 
 check for **containment** of `other`
 ```rust
-contains(&self, other: &Self) -> bool
+fn contains(&self, other: &Self) -> bool
 ```
 
 **contains** `x`, `y`
 ```rust
-contains_xy(&self, x: f64, y: f64) -> bool
+fn contains_xy(&self, x: f64, y: f64) -> bool
 ```
 
 **completely contains** other 
 ```rust
-completely_contains(&self, other: &Self) -> bool
+fn completely_contains(&self, other: &Self) -> bool
 ```
 
 **completely contains** `x`, `y` 
 ```rust
-completely_contains_xy(&self, x: f64, y: f64) -> bool
+fn completely_contains_xy(&self, x: f64, y: f64) -> bool
 ```
 
 **translate** by `dx`, `dy`
 ```rust
-translate(&self, dx: f64, dy: f64) -> MBR
+fn translate(&self, dx: f64, dy: f64) -> MBR
+```
+
+**centre** of bounding box
+```rust
+fn centre(&self) -> Point
 ```
 
 **intersects** other box
 ```rust
-intersects(&self, other: &Self) -> bool
+fn intersects(&self, other: &Self) -> bool
 ```
 
 **intersects** point
 ```rust
-intersects_point(&self, pt: &Point) -> bool
+fn intersects_point(&self, pt: &Point) -> bool
 ```
 
 **intersects** `x, y`
 ```rust
-intersects_xy(&self, x: f64, y: f64) -> bool
+fn intersects_xy(&self, x: f64, y: f64) -> bool
 ```
 
 **intersects** bounds
 ```rust
-intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool
+fn intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool
 ```
 
 checks **disjoint** between boxes
 ```rust
-disjoint(&self, m: &Self) -> bool
-
+fn disjoint(&self, m: &Self) -> bool
 ```
+
 **intersection** between boxes
 ```rust
-intersection(&self, other: &Self) -> Option<MBR>
+fn intersection(&self, other: &Self) -> Option<MBR>
 ```
 
 **expand** to include other box
 ```rust
-expand_to_include(&mut self, other: &Self) -> &mut MBR
+fn expand_to_include(&mut self, other: &Self) -> &mut MBR
 ```
 
 **expand** to include `x, y`
 ```rust
-expand_to_include_xy(&mut self, x: f64, y: f64) -> &mut Self
+fn expand_to_include_xy(&mut self, x: f64, y: f64) -> &mut Self
 ```
 
 **expand** by deltas : dx, dy (pad x and y dimension by dx and dy)
 ```rust
-expand_by_delta(&mut self, dx: f64, dy: f64) -> &mut MBR
+fn expand_by_delta(&mut self, dx: f64, dy: f64) -> &mut MBR
+```
+
+**dx, dy** between two bounding boxes
+```rust
+fn distance_dxdy(&self, other: &Self) -> (f64, f64)
 ```
 
 **distance** between boxes
 ```rust
-distance(&self, other: &Self) -> f64
+fn distance(&self, other: &Self) -> f64
 ```
 
 **square** distance between boxes
 ```rust
-distance_square(&self, other: &Self) -> f64
+fn distance_square(&self, other: &Self) -> f64
 ```
+
 **wkt** string 
 ```rust
-wkt(&self) -> String
+fn wkt(&self) -> String
 ```
 
 ## LIC 
