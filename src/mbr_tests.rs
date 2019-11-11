@@ -1,44 +1,41 @@
 use super::*;
 use math_util::round;
+use point::pt;
 use rstar::Envelope;
 use serde_json;
 
 #[test]
 fn test_construction() {
-    let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
-    let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
+    let m0 = MBR::new(pt!(0.0, 0.0), pt!(0.5, 0.2));
+    let m1 = MBR::new(pt!(2.0, 2.0), pt!(-0.5, -0.2));
 
     let serialized = serde_json::to_string(&m1).unwrap();
 
     assert_eq!(
         serialized,
-        String::from(r#"{"minx":-0.5,"miny":-0.2,"maxx":2.0,"maxy":2.0}"#)
+        String::from(r#"{"ll":{"x":-0.5,"y":-0.2},"ur":{"x":2.0,"y":2.0}}"#)
     );
     assert_eq!(m0.envelope().area(), m0.area());
     assert_eq!(m1.envelope().area(), m1.area());
 
     let m = &m0 + &m1;
-    assert_eq!(m, MBR::new(-0.5, -0.2, 2.0, 2.0));
+    assert_eq!(m, MBR::new(pt!(-0.5, -0.2), pt!(2.0, 2.0)));
 
-    let m1 = MBR::new_raw(2.0, 2.0, -0.5, -0.2);
+    let m1 = MBR::new_raw(pt!(2.0, 2.0), pt!(-0.5, -0.2));
     assert_eq!(
         m1,
         MBR {
-            minx: 2.0,
-            miny: 2.0,
-            maxx: -0.5,
-            maxy: -0.2,
+            ll: pt!(2.0, 2.0),
+            ur: pt!(-0.5, -0.2)
         }
     );
 
-    let m = MBR::new(2.0, 2.0, 0.5, 0.2);
+    let m = MBR::new(pt!(2.0, 2.0), pt!(0.5, 0.2));
     assert_eq!(
         m,
         (MBR {
-            minx: 0.5,
-            miny: 0.2,
-            maxx: 2.0,
-            maxy: 2.0,
+            ll: pt!(0.5, 0.2),
+            ur: pt!(2.0, 2.0)
         })
     );
 
@@ -61,7 +58,7 @@ fn test_construction() {
 
 #[test]
 fn test_methods() {
-    let m = MBR::new(2.0, 2.0, 0.5, 0.2);
+    let m = MBR::new(pt!(2.0, 2.0), pt!(0.5, 0.2));
     assert_eq!(
         (m.width(), m.height(), m.area(), m.is_point()),
         (1.5, 1.8, 1.5 * 1.8, false)
@@ -69,11 +66,11 @@ fn test_methods() {
     assert_eq!((0.5, 0.2, 2.0, 2.0), m.as_tuple());
 
     let b = m.as_poly_array();
-    let b0 = Point::new(0.5, 0.2);
-    let b1 = Point::new(0.5, 2.);
-    let b2 = Point::new(2., 2.);
-    let b3 = Point::new(2., 0.2);
-    let b4 = Point::new(0.5, 0.2);
+    let b0 = pt!(0.5, 0.2);
+    let b1 = pt!(0.5, 2.);
+    let b2 = pt!(2., 2.);
+    let b3 = pt!(2., 0.2);
+    let b4 = pt!(0.5, 0.2);
 
     assert_eq!(
         (b.len(), b[0], b[1], b[2], b[3], b[4], b[0]),
@@ -89,7 +86,7 @@ fn test_methods() {
     assert_eq!(m2.area(), m.area());
     assert!(m2.equals(&m));
     assert_eq!(m2, m);
-    m1.minx = -1.;
+    m1.ll.x = -1.;
     assert_ne!(m2, m1);
 }
 
@@ -101,21 +98,21 @@ fn test_ops_1() {
     let mut n00 = MBR::new_default();
     n00.expand_to_include_xy(-2., -2.);
 
-    let mut m0 = MBR::new(1., 1., 1., 1.);
+    let mut m0 = MBR::new(pt!(1., 1.), pt!(1., 1.));
     m0.expand_by_delta(1., 1.);
 
-    let m1 = MBR::new(0., 0., 2., 2.);
-    let m2 = MBR::new(4., 5., 8., 9.);
-    let m3 = MBR::new(4., 5., 8., 9.);
-    let m4 = MBR::new(5., 0., 8., 2.);
-    let m5 = MBR::new(5., 11., 8., 9.);
-    let m6 = MBR::new(0., 0., 2., -2.);
-    let m7 = MBR::new(-2., 1., 4., -2.);
-    let m8 = MBR::new(4., 2., 4., 2.);
+    let m1 = MBR::new_from_array([0., 0., 2., 2.]);
+    let m2 = MBR::new_from_array([4., 5., 8., 9.]);
+    let m3 = MBR::new_from_array([4., 5., 8., 9.]);
+    let m4 = MBR::new_from_array([5., 0., 8., 2.]);
+    let m5 = MBR::new_from_array([5., 11., 8., 9.]);
+    let m6 = MBR::new_from_array([0., 0., 2., -2.]);
+    let m7 = MBR::new_from_array([-2., 1., 4., -2.]);
+    let m8 = MBR::new_from_array([4., 2., 4., 2.]);
     let mut vects = vec![m1, m2, m4, m5, m6, m7, m3];
     vects.sort();
 
-    let m0123 = MBR::new(0., 2., 1., 3.);
+    let m0123 = MBR::new_from_array([0., 2., 1., 3.]);
     let clone_m0123 = m0123;
 
     let r1: [f64; 4] = [0., 0., 2., 2.];
@@ -131,8 +128,8 @@ fn test_ops_1() {
     let nm00 = m00.intersection(&n00);
     assert!(nm00.is_some());
 
-    let bln1 = nm00.unwrap().minx == 0.0 && nm00.unwrap().miny == 0.0;
-    let bln2 = nm00.unwrap().maxx == 0.0 && nm00.unwrap().maxy == 0.0;
+    let bln1 = nm00.unwrap().ll.as_tuple() == (0.0, 0.0);
+    let bln2 = nm00.unwrap().ur.as_tuple() == (0.0, 0.0);
     assert!(bln1);
     assert!(bln2);
     assert!(nm00.unwrap().is_point());
@@ -167,8 +164,8 @@ fn test_ops_1() {
     let d = 2f64.hypot(3.);
     assert_eq!(m1.distance(&m2), d);
     assert_eq!(m1.distance_square(&m2), round(d * d, 12));
-    assert_eq!(m1.distance_2(&m8.ll().as_array()), m1.distance_square(&m8));
-    assert_eq!(m1.distance_2(&m8.ur().as_array()), m1.distance_square(&m8));
+    assert_eq!(m1.distance_2(&m8.ll.as_array()), m1.distance_square(&m8));
+    assert_eq!(m1.distance_2(&m8.ur.as_array()), m1.distance_square(&m8));
 }
 
 #[test]
@@ -179,38 +176,38 @@ fn test_ops2() {
     let mut n00 = MBR::new_default();
     n00.expand_to_include_xy(-2., -2.);
 
-    let mut m0 = MBR::new(1., 1., 1., 1.);
+    let mut m0 = MBR::new_from_array([1., 1., 1., 1.]);
     m0.expand_by_delta(1., 1.);
     let mut m0_pt = MBR::new_from_pt(Point::new(0., 0.));
 
-    let m1 = MBR::new(0., 0., 2., 2.);
-    let m2 = MBR::new(4., 5., 8., 9.);
+    let m1 = MBR::new_from_array([0., 0., 2., 2.]);
+    let m2 = MBR::new_from_array([4., 5., 8., 9.]);
 
-    let m1_bounds = MBR::new_from_bounds(Point::new(0., 0.), Point::new(2., 2.));
-    let m2_bounds = MBR::new_from_bounds(Point::new(4., 5.), Point::new(8., 9.));
+    let m1_bounds = MBR::new(Point::new(0., 0.), Point::new(2., 2.));
+    let m2_bounds = MBR::new(Point::new(4., 5.), Point::new(8., 9.));
 
-    let m3 = MBR::new(1.7, 1.5, 5., 9.);
-    let m4 = MBR::new(5., 0., 8., 2.);
-    let m5 = MBR::new(5., 11., 8., 9.);
-    let m6 = MBR::new(0., 0., 2., -2.);
-    let m7 = MBR::new(-2., 1., 4., -2.);
-    let m8 = MBR::new(-1., 0., 1., -1.5);
-    let m9 = MBR::new(-1., 0., 100., 10.5);
+    let m3 = MBR::new_from_array([1.7, 1.5, 5., 9.]);
+    let m4 = MBR::new_from_array([5., 0., 8., 2.]);
+    let m5 = MBR::new_from_array([5., 11., 8., 9.]);
+    let m6 = MBR::new_from_array([0., 0., 2., -2.]);
+    let m7 = MBR::new_from_array([-2., 1., 4., -2.]);
+    let m8 = MBR::new_from_array([-1., 0., 1., -1.5]);
+    let m9 = MBR::new_from_array([-1., 0., 100., 10.5]);
     let mut vects = vec![m9, m1, m2, m3, m4, m5, m6, m7, m8];
     vects.sort();
 
     let p = Point::new(1.7, 1.5);
     let p0 = Point::new(1.7, 0.0);
 
-    let m0123 = MBR::new(0., 2., 1., 3.);
+    let m0123 = MBR::new_from_array([0., 2., 1., 3.]);
     let clone_m0123 = m0123;
 
     //SECTION (Constructs)
     assert_ne!(m0, m0_pt);
     assert_eq!(m0.llur()[0], Point::new(0., 0.));
-    assert_eq!(m0.llur()[0], m0.ll());
+    assert_eq!(m0.llur()[0], m0.ll);
     assert_eq!(m0.llur()[1], Point::new(2., 2.));
-    assert_eq!(m0.llur()[1], m0.ur());
+    assert_eq!(m0.llur()[1], m0.ur);
     m0_pt.expand_to_include_xy(2., 2.);
     assert_eq!(m0, m0_pt);
     assert_eq!(m0.llur(), m0_pt.llur());
@@ -237,8 +234,8 @@ fn test_ops2() {
     let nm00 = m00.intersection(&n00);
     assert_ne!(nm00, None);
 
-    let bln1 = nm00.unwrap().minx == 0.0 && nm00.unwrap().miny == 0.0;
-    let bln2 = nm00.unwrap().maxx == 0.0 && nm00.unwrap().maxy == 0.0;
+    let bln1 = nm00.unwrap().ll == (0, 0).into();
+    let bln2 = nm00.unwrap().ur == (0, 0).into();
     assert!(bln1);
     assert!(bln2);
     assert!(nm00.unwrap().is_point());
@@ -296,12 +293,12 @@ fn test_ops2() {
         (-5.369812194018422f64).hypot(3.0022503796012305 - 2.)
     );
 
-    let b = MBR::new(
+    let b = MBR::new_from_array([
         -4.742849832055231,
         -4.1033230559816065,
         -1.9563504455521576,
         -2.292098454754609,
-    );
+    ]);
     assert_eq!(
         m1.distance(&b),
         (-1.9563504455521576f64).hypot(-2.292098454754609)
@@ -313,20 +310,20 @@ fn test_ops2() {
     let p3 = Point::new(3.58, 11.79);
     let p4 = Point::new(-1.16, 14.71);
 
-    let mp12 = MBR::new(p1.x, p1.y, p2.x, p2.y);
-    let mp34 = MBR::new(p3.x, p3.y, p4.x, p4.y);
+    let mp12 = MBR::new(p1, p2);
+    let mp34 = MBR::new(p3, p4);
 
     // intersects but segment are disjoint
     assert!(mp12.intersects(&mp34));
     assert!(mp12.intersects_bounds(&p3, &p4));
-    assert!(!mp12.intersects_bounds(&Point::new(m1.minx, m1.miny), &Point::new(m1.maxx, m1.maxy)));
+    assert!(!mp12.intersects_bounds(&m1.ll, &m1.ur));
     assert!(!mp12.intersects_xy(p3.x, p3.y));
     assert!(m1.contains_xy(1., 1.));
 
-    let mbr11 = MBR::new(1., 1., 1.5, 1.5);
-    let mbr12 = MBR::new(1., 1., 2., 2.);
-    let mbr13 = MBR::new(1., 1., 2.000045, 2.00001);
-    let mbr14 = MBR::new(2.000045, 2.00001, 4.000045, 4.00001);
+    let mbr11 = MBR::new_from_array([1., 1., 1.5, 1.5]);
+    let mbr12 = MBR::new_from_array([1., 1., 2., 2.]);
+    let mbr13 = MBR::new_from_array([1., 1., 2.000045, 2.00001]);
+    let mbr14 = MBR::new_from_array([2.000045, 2.00001, 4.000045, 4.00001]);
 
     assert!(m1.contains(&mbr11));
     assert!(m1.contains(&mbr12));
@@ -345,9 +342,9 @@ fn test_ops2() {
     assert!(!m1.completely_contains(&mbr13));
 
     //    SECTION("translate, expand by, area")
-    let mut ma = MBR::new(0., 0., 2., 2.);
-    let mb = MBR::new(-1., -1., 1.5, 1.9);
-    let mc = MBR::new(1.7, 1.5, 5., 9.);
+    let mut ma = MBR::new_from_array([0., 0., 2., 2.]);
+    let mb = MBR::new_from_array([-1., -1., 1.5, 1.9]);
+    let mc = MBR::new_from_array([1.7, 1.5, 5., 9.]);
     let mut md = ma;
     let ma_mc_plus = &ma + &mc;
     let ma_mc = &ma | &mc;

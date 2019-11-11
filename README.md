@@ -2,7 +2,15 @@
 Minimum bounding rectangle (**MBR**)- axis aligned rectangle in 2d space.
 
 ## Coverage
-`100%` line coverage
+```bash
+[INFO tarpaulin] Coverage Results:
+|| Uncovered Lines:
+|| Tested/Total Lines:
+|| src/lib.rs: 177/177
+|| src/mbr_tests.rs: 272/272
+|| 
+100.00% coverage, 449/449 lines covered 
+```
 
 ## Examples 
 ```rust
