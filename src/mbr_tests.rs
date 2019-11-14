@@ -1,6 +1,6 @@
 use super::*;
+use geom_2d::pt;
 use math_util::round;
-use point::pt;
 use rstar::Envelope;
 use serde_json;
 

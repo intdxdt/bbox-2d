@@ -6,7 +6,7 @@ use std::fmt::{Display, Error, Formatter};
 use std::ops;
 
 use coordinate::Coordinate;
-use point::Point;
+use geom_2d::point::Point;
 
 ///MBR
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]

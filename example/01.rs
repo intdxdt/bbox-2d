@@ -1,5 +1,5 @@
 use bbox_2d::MBR;
-use point::Point;
+use geom_2d::point::Point;
 
 #[cfg_attr(tarpaulin, skip)]
 fn main() {
