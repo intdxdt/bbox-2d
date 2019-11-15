@@ -10,8 +10,6 @@ name = "01"
 path = "example/01.rs"
 
 [dependencies]
-geom-2d = { git = "https://github.com/intdxdt/geom-2d", branch="master"}
-coordinate = { git = "https://github.com/intdxdt/coordinate", branch="master"}
 math-util = { git = "https://github.com/intdxdt/math-util", branch="master"}
 serde =   { version = "1.0.101", features = ["derive"] }
 rstar = "0.5.1"

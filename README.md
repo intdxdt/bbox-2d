@@ -6,29 +6,27 @@ Minimum bounding rectangle (**MBR**)- axis aligned rectangle in 2d space.
 [INFO tarpaulin] Coverage Results:
 || Uncovered Lines:
 || Tested/Total Lines:
-|| src/lib.rs: 176/176
-|| src/mbr_tests.rs: 275/275
+|| src/lib.rs: 195/195
+|| src/mbr_tests.rs: 293/293
 || 
-100.00% coverage, 451/451 lines covered
+100.00% coverage, 488/488 lines covered
+
 ```
 
 ## Examples 
 ```rust
-use bbox_2d::MBR;
-use point::Point;
-
 fn main() {
-    let pt = Point{x:  367.74747560229144, y: 363.2231833134207};
-    let a = MBR::new_from_bounds(Point { x: 350., y: 400. }, Point { x: 200., y: 250. });
-    let b = MBR::new(300., 200., 400., 350.);
+    let pt =  [367.74747560229144, 363.2231833134207];
+    let a = MBR::new( 350.,  400. ,  200.,  250. );
+    let b = [300., 200., 400., 350.].into();
     println!("a intersects b = {} ", a.intersects(&b));
     println!("a disjoint b = {} ", a.disjoint(&b));
-    println!("a equals b = {} ", a == b );
+    println!("a equals b = {} ", a == b);
 
     let inter = a.intersection(&b).unwrap();
-    println!("{}", inter);//POLYGON ((300 250,300 350,350 350,350 250,300 250))
-    //intersection (same as inter above)
-    let mut  inter_a_b = (&a & &b).unwrap();
+    println!("{}", inter); //POLYGON ((300 250,300 350,350 350,350 250,300 250))
+                           //intersection (same as inter above)
+    let mut inter_a_b = (&a & &b).unwrap();
     println!("area A={}, area B={}; A&B {}", a.area(), b.area(), inter_a_b.area());
     //area A=22500, area B=15000; A&B 5000
     println!("inter_a_b intersects pt = {}", inter_a_b.intersects_point(&pt));
@@ -44,17 +42,16 @@ fn main() {
     println!("width  of a&b = {}", inter_a_b.width());
     println!("height of a&b = {}", inter_a_b.height());
     inter_a_b.expand_by_delta(30.0, 25.0);
-    println!("{}", inter_a_b);//POLYGON ((270 225,270 375,380 375,380 225,270 225))
+    println!("{}", inter_a_b); //POLYGON ((270 225,270 375,380 375,380 225,270 225))
 
     //contains
     println!("inter_a_b intersects pt = {}", inter_a_b.intersects_point(&pt));
-    println!("inter_a_b intersects pt = {}", inter_a_b.intersects_xy(pt.x , pt.y));
+    println!("inter_a_b intersects pt = {}", inter_a_b.intersects_xy(pt[0], pt[1]));
     println!("inter_a_b intersects pt = {}", inter_a_b.contains(&MBR::new_from_pt(pt)));
-    println!("inter_a_b intersects pt = {}", inter_a_b.contains_xy(pt.x, pt.y));
+    println!("inter_a_b intersects pt = {}", inter_a_b.contains_xy(pt[0], pt[1]));
 
     //distance
     println!("a distance to mbr(pt) = {}", a.distance(&MBR::new_from_pt(pt)));
-
 }
 ```
 
@@ -75,20 +72,22 @@ fn main() {
 ### Fields
 ```rust
 struct MBR {
-    pub ll: Point,
-    pub ur: Point
+    pub minx: f64,
+    pub miny: f64,
+    pub maxx: f64,
+    pub maxy: f64,
 }
 ```
 
 ### Constructors 
 New MBR given ll & ur
 ```rust
-fn new(ll: Point, ur: Point) -> MBR
+new
 ```
 
-New MBR as given ll & ur  
+New MBR given ll (x1, y1) & ur(x2, y2)
 ```rust
-fn new_raw(ll: Point, ur: Point) -> MBR
+fn new_raw(minx: f64, miny: f64, maxx: f64, maxy: f64) -> MBR
 ```
 
 New MBR from zero value
@@ -96,9 +95,9 @@ New MBR from zero value
 fn new_default() -> MBR
 ```
 
-New MBR from point
+New MBR from point(x, y)
 ```rust
-fn new_from_pt(a: Point) -> MBR
+fn new_from_pt(a: [f64; 2]) -> MBR
 ```
 
 New MBR from array of 4 coordinates [x1, y1, x2, y2]
@@ -134,7 +133,7 @@ fn area(&self) -> f64
 
 as a **closed** polygon coordinates
 ```rust
-fn as_poly_array(&self) -> Vec<Point>
+fn as_poly_array(&self) -> Vec<[f64; 2]>
 ```
 
 as an array 
@@ -142,14 +141,25 @@ as an array
 fn as_array(&self) -> [f64; 4]
 ```
 
-bounds as **tuple** [minx,miny, maxx,maxy]
+bounds as **tuple** (minx,miny, maxx,maxy)
 ```rust
 fn as_tuple(&self) -> (f64, f64, f64, f64)
 ```
 
 Lower left and upper right: Point(minx,miny)-Point(maxx,maxy)
 ```rust
-fn llur(self) -> [Point; 2]
+fn llur(self) -> [[f64; 2]; 2]
+```
+
+lower left - [minx,miny]
+```rust
+fn ll(self) -> [f64; 2]
+
+```
+
+upper right - [maxx,maxy]
+```rust
+fn ur(self) -> [f64; 2]
 ```
 
 **equality** of two bounding boxes
@@ -199,7 +209,7 @@ fn intersects(&self, other: &Self) -> bool
 
 **intersects** point
 ```rust
-fn intersects_point(&self, pt: &Point) -> bool
+fn intersects_point(&self, pt: &[f64])  -> bool
 ```
 
 **intersects** `x, y`
@@ -209,7 +219,7 @@ fn intersects_xy(&self, x: f64, y: f64) -> bool
 
 **intersects** bounds
 ```rust
-fn intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool
+fn intersects_bounds(&self, pt1: &[f64], pt2: &[f64]) -> bool
 ```
 
 checks **disjoint** between boxes

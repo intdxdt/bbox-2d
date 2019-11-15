@@ -4,45 +4,48 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
 use std::ops;
-
-use coordinate::Coordinate;
-use geom_2d::Point;
 use std::ops::Index;
 
 ///MBR
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct MBR {
-    pub ll: Point,
-    pub ur: Point,
+    pub minx: f64,
+    pub miny: f64,
+    pub maxx: f64,
+    pub maxy: f64,
 }
 
 impl MBR {
-    ///New MBR given ll & ur
-    pub fn new(ll: Point, ur: Point) -> MBR {
+    ///New MBR given ll (x1, y1) & ur(x2, y2)
+    pub fn new(x1: f64, y1: f64, x2: f64, y2: f64) -> MBR {
         MBR {
-            ll: ll.min_of_bounds(&ur),
-            ur: ll.max_of_bounds(&ur),
+            minx: x1.min(x2),
+            miny: y1.min(y2),
+            maxx: x1.max(x2),
+            maxy: y1.max(y2),
         }
     }
 
-    ///New MBR as given ll & ur
-    pub fn new_raw(ll: Point, ur: Point) -> MBR {
-        MBR { ll, ur }
+    ///New MBR given ll (x1, y1) & ur(x2, y2)
+    pub fn new_raw(minx: f64, miny: f64, maxx: f64, maxy: f64) -> MBR {
+        MBR { minx, miny, maxx, maxy }
     }
+
 
     ///New MBR from zero value
     pub fn new_default() -> MBR {
-        MBR::new_raw(Point::new_origin(), Point::new_origin())
+        MBR { minx: 0.0, miny: 0.0, maxx: 0.0, maxy: 0.0 }
     }
 
     ///New MBR from array of 4 coordinates [x1, y1, x2, y2]
-    pub fn new_from_array(o: [f64; 4]) -> MBR {
-        MBR::new(o[0..2].into(), o[2..4].into())
-    }
+    pub fn new_from_array(o: [f64; 4]) -> MBR { o.into() }
 
     ///New MBR from point
-    pub fn new_from_pt(a: Point) -> MBR {
-        MBR::new_raw(a, a)
+    pub fn new_from_pt(pt: [f64; 2]) -> MBR { pt.into() }
+
+    ///New MBR from bounds ll (x1, y1) & ur(x2, y2)
+    pub fn new_from_bounds(ll: [f64; 2], ur: [f64; 2]) -> MBR {
+        MBR::new(ll[0], ll[1], ur[0], ur[1])
     }
 
     ///Bounding box.
@@ -59,15 +62,11 @@ impl MBR {
 
     ///Width of bounding box.
     #[inline]
-    pub fn width(&self) -> f64 {
-        self.ur.x - self.ll.x
-    }
+    pub fn width(&self) -> f64 { self.maxx - self.minx }
 
     ///Height of bounding box.
     #[inline]
-    pub fn height(&self) -> f64 {
-        self.ur.y - self.ll.y
-    }
+    pub fn height(&self) -> f64 { self.maxy - self.miny }
 
     ///Computes area of bounding box.
     #[inline]
@@ -76,107 +75,116 @@ impl MBR {
     }
 
     ///Bounding box as a closed polygon array.
-    pub fn as_poly_array(&self) -> Vec<Point> {
-        let (minx, miny) = self.ll.as_tuple();
-        let (maxx, maxy) = self.ur.as_tuple();
+    pub fn as_poly_array(&self) -> Vec<[f64; 2]> {
         vec![
-            Point { x: minx, y: miny },
-            Point { x: minx, y: maxy },
-            Point { x: maxx, y: maxy },
-            Point { x: maxx, y: miny },
-            Point { x: minx, y: miny },
+            [self.minx, self.miny],
+            [self.minx, self.maxy],
+            [self.maxx, self.maxy],
+            [self.maxx, self.miny],
+            [self.minx, self.miny],
         ]
     }
 
     ///Lower left and upper right corners as an array [minx,miny, maxx,maxy]
     pub fn as_array(&self) -> [f64; 4] {
-        [self.ll.x, self.ll.y, self.ur.x, self.ur.y]
+        [self.minx, self.miny, self.maxx, self.maxy]
     }
 
     ///Lower left and upper right corners as a tuple (minx,miny, maxx,maxy)
     pub fn as_tuple(&self) -> (f64, f64, f64, f64) {
-        (self.ll.x, self.ll.y, self.ur.x, self.ur.y)
+        (self.minx, self.miny, self.maxx, self.maxy)
     }
 
     ///lower left and upper right as tuple [Point(minx,miny),Point(maxx,maxy)]
     #[inline]
-    pub fn llur(self) -> [Point; 2] {
-        [self.ll, self.ur]
+    pub fn llur(self) -> [[f64; 2]; 2] {
+        [self.ll(), self.ur()]
     }
 
+    ///lower left - Point(minx,miny)
+    #[inline]
+    pub fn ll(self) -> [f64; 2] {
+        [self.minx, self.miny]
+    }
+
+    ///upper right - Point(maxx,maxy)
+    #[inline]
+    pub fn ur(self) -> [f64; 2] {
+        [self.maxx, self.maxy]
+    }
     ///Compare equality of two bounding boxes
     #[inline]
     pub fn equals(&self, other: &Self) -> bool {
-        self.ll.equals(&other.ll) && self.ur.equals(&other.ur)
+        feq(self.maxx, other.maxx)
+            && feq(self.maxy, other.maxy)
+            && feq(self.minx, other.minx)
+            && feq(self.miny, other.miny)
     }
 
     ///Checks if bounding box can be represented as a point, width and height as 0.
     #[inline]
     pub fn is_point(&self) -> bool {
-        self.centre().equals(&self.ll)
+        let c = self.centre();
+        feq(self.minx, c[0]) && feq(self.miny, c[1])
     }
 
     ///Contains bonding box
     ///is true if mbr completely contains other, boundaries may touch
     #[inline]
     pub fn contains(&self, other: &Self) -> bool {
-        (other.ll.x >= self.ll.x)
-            && (other.ll.y >= self.ll.y)
-            && (other.ur.x <= self.ur.x)
-            && (other.ur.y <= self.ur.y)
+        (other.minx >= self.minx)
+            && (other.miny >= self.miny)
+            && (other.maxx <= self.maxx)
+            && (other.maxy <= self.maxy)
     }
     ///contains x, y
     #[inline]
     pub fn contains_xy(&self, x: f64, y: f64) -> bool {
-        (x >= self.ll.x) && (x <= self.ur.x) && (y >= self.ll.y) && (y <= self.ur.y)
+        (x >= self.minx) && (x <= self.maxx) && (y >= self.miny) && (y <= self.maxy)
     }
 
     ///Completely contains bonding box
     ///is true if mbr completely contains other without touching boundaries
     #[inline]
     pub fn completely_contains(&self, other: &Self) -> bool {
-        (other.ll.x > self.ll.x)
-            && (other.ll.y > self.ll.y)
-            && (other.ur.x < self.ur.x)
-            && (other.ur.y < self.ur.y)
+        (other.minx > self.minx)
+            && (other.miny > self.miny)
+            && (other.maxx < self.maxx)
+            && (other.maxy < self.maxy)
     }
 
     ///completely_contains_xy is true if mbr completely contains location with {x, y}
     ///without touching boundaries
     #[inline]
     pub fn completely_contains_xy(&self, x: f64, y: f64) -> bool {
-        (x > self.ll.x) && (x < self.ur.x) && (y > self.ll.y) && (y < self.ur.y)
+        (x > self.minx) && (x < self.maxx) && (y > self.miny) && (y < self.maxy)
     }
 
     ///Translate bounding box by change in dx and dy.
     pub fn translate(&self, dx: f64, dy: f64) -> MBR {
-        let delta = Point { x: dx, y: dy };
-        MBR::new_raw(self.ll.add(&delta), self.ur.add(&delta))
+        MBR::new_raw(self.minx + dx, self.miny + dy, self.maxx + dx, self.maxy + dy)
     }
 
     ///Computes the center of minimum bounding box - (x, y)
     #[inline]
-    pub fn centre(&self) -> Point {
-        Point {
-            x: (self.ll.x + self.ur.x) / 2.0,
-            y: (self.ll.y + self.ur.y) / 2.0,
-        }
+    pub fn centre(&self) -> [f64; 2] {
+        [(self.minx + self.maxx) / 2.0, (self.miny + self.maxy) / 2.0]
     }
 
     ///Checks if bounding box intersects other
     #[inline]
     pub fn intersects(&self, other: &Self) -> bool {
         //not disjoint
-        !(other.ll.x > self.ur.x
-            || other.ur.x < self.ll.x
-            || other.ll.y > self.ur.y
-            || other.ur.y < self.ll.y)
+        !(other.minx > self.maxx
+            || other.maxx < self.minx
+            || other.miny > self.maxy
+            || other.maxy < self.miny)
     }
 
     ///intersects point
     #[inline]
-    pub fn intersects_point(&self, pt: &Point) -> bool {
-        self.contains_xy(pt.x, pt.y)
+    pub fn intersects_point(&self, pt: &[f64]) -> bool {
+        self.intersects_xy(pt[0], pt[1])
     }
 
     ///intersects point with x, y
@@ -186,19 +194,19 @@ impl MBR {
     }
 
     /// Intersects bounds
-    pub fn intersects_bounds(&self, pt1: &Point, pt2: &Point) -> bool {
-        let minq = pt1.x.min(pt2.x);
-        let maxq = pt1.x.max(pt2.x);
+    pub fn intersects_bounds(&self, pt1: &[f64], pt2: &[f64]) -> bool {
+        let minq = pt1[0].min(pt2[0]);
+        let maxq = pt1[0].max(pt2[0]);
 
-        if self.ll.x > maxq || self.ur.x < minq {
+        if self.minx > maxq || self.maxx < minq {
             return false;
         }
 
-        let minq = pt1.y.min(pt2.y);
-        let maxq = pt1.y.max(pt2.y);
+        let minq = pt1[1].min(pt2[1]);
+        let maxq = pt1[1].max(pt2[1]);
 
         // not disjoint
-        !(self.ll.y > maxq || self.ur.y < minq)
+        !(self.miny > maxq || self.maxy < minq)
     }
 
     ///Test for disjoint between two mbrs
@@ -212,68 +220,49 @@ impl MBR {
         if !self.intersects(other) {
             return None;
         }
-        let minx = if self.ll.x > other.ll.x {
-            self.ll.x
-        } else {
-            other.ll.x
-        };
-        let miny = if self.ll.y > other.ll.y {
-            self.ll.y
-        } else {
-            other.ll.y
-        };
-        let maxx = if self.ur.x < other.ur.x {
-            self.ur.x
-        } else {
-            other.ur.x
-        };
-        let maxy = if self.ur.y < other.ur.y {
-            self.ur.y
-        } else {
-            other.ur.y
-        };
+        let minx = if self.minx > other.minx { self.minx } else { other.minx };
+        let miny = if self.miny > other.miny { self.miny } else { other.miny };
+        let maxx = if self.maxx < other.maxx { self.maxx } else { other.maxx };
+        let maxy = if self.maxy < other.maxy { self.maxy } else { other.maxy };
 
-        Some(MBR::new_raw(
-            Point { x: minx, y: miny },
-            Point { x: maxx, y: maxy },
-        ))
+        Some(MBR { minx, miny, maxx, maxy })
     }
 
     ///Expand include other bounding box
     pub fn expand_to_include(&mut self, other: &Self) -> &mut MBR {
-        self.ll.x = other.ll.x.min(self.ll.x);
-        self.ll.y = other.ll.y.min(self.ll.y);
+        self.minx = other.minx.min(self.minx);
+        self.miny = other.miny.min(self.miny);
 
-        self.ur.x = other.ur.x.max(self.ur.x);
-        self.ur.y = other.ur.y.max(self.ur.y);
+        self.maxx = other.maxx.max(self.maxx);
+        self.maxy = other.maxy.max(self.maxy);
         self
     }
 
     ///Expand to include x,y
     pub fn expand_to_include_xy(&mut self, x: f64, y: f64) -> &mut Self {
-        if x < self.ll.x {
-            self.ll.x = x
-        } else if x > self.ur.x {
-            self.ur.x = x
+        if x < self.minx {
+            self.minx = x
+        } else if x > self.maxx {
+            self.maxx = x
         }
 
-        if y < self.ll.y {
-            self.ll.y = y
-        } else if y > self.ur.y {
-            self.ur.y = y
+        if y < self.miny {
+            self.miny = y
+        } else if y > self.maxy {
+            self.maxy = y
         }
         self
     }
 
     ///Expand by delta in x and y
     pub fn expand_by_delta(&mut self, dx: f64, dy: f64) -> &mut MBR {
-        let (minx, miny) = (self.ll.x - dx, self.ll.y - dy);
-        let (maxx, maxy) = (self.ur.x + dx, self.ur.y + dy);
+        let (minx, miny) = (self.minx - dx, self.miny - dy);
+        let (maxx, maxy) = (self.maxx + dx, self.maxy + dy);
 
-        self.ll.x = minx.min(maxx);
-        self.ll.y = miny.min(maxy);
-        self.ur.x = minx.max(maxx);
-        self.ur.y = miny.max(maxy);
+        self.minx = minx.min(maxx);
+        self.miny = miny.min(maxy);
+        self.maxx = minx.max(maxx);
+        self.maxy = miny.max(maxy);
 
         self
     }
@@ -284,17 +273,17 @@ impl MBR {
         let mut dy = 0.0;
 
         // find closest edge by x
-        if self.ur.x < other.ll.x {
-            dx = other.ll.x - self.ur.x
-        } else if self.ll.x > other.ur.x {
-            dx = self.ll.x - other.ur.x
+        if self.maxx < other.minx {
+            dx = other.minx - self.maxx
+        } else if self.minx > other.maxx {
+            dx = self.minx - other.maxx
         }
 
         // find closest edge by y
-        if self.ur.y < other.ll.y {
-            dy = other.ll.y - self.ur.y
-        } else if self.ll.y > other.ur.y {
-            dy = self.ll.y - other.ur.y
+        if self.maxy < other.miny {
+            dy = other.miny - self.maxy
+        } else if self.miny > other.maxy {
+            dy = self.miny - other.maxy
         }
 
         (dx, dy)
@@ -324,10 +313,10 @@ impl MBR {
     pub fn wkt(&self) -> String {
         format!(
             "POLYGON (({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
-            lx = self.ll.x,
-            ly = self.ll.y,
-            ux = self.ur.x,
-            uy = self.ur.y
+            lx = self.minx,
+            ly = self.miny,
+            ux = self.maxx,
+            uy = self.maxy
         )
     }
 }
@@ -343,14 +332,10 @@ impl<T> From<(T, T, T, T)> for MBR
 {
     fn from(tup: (T, T, T, T)) -> Self {
         MBR::new(
-            Point {
-                x: num::cast(tup.0).unwrap(),
-                y: num::cast(tup.1).unwrap(),
-            },
-            Point {
-                x: num::cast(tup.2).unwrap(),
-                y: num::cast(tup.3).unwrap(),
-            },
+            num::cast(tup.0).unwrap(),
+            num::cast(tup.1).unwrap(),
+            num::cast(tup.2).unwrap(),
+            num::cast(tup.3).unwrap(),
         )
     }
 }
@@ -360,11 +345,9 @@ impl<T> From<(T, T)> for MBR
         T: NumCast + Copy,
 {
     fn from(tup: (T, T)) -> Self {
-        let p = Point {
-            x: num::cast(tup.0).unwrap(),
-            y: num::cast(tup.1).unwrap(),
-        };
-        MBR { ll: p, ur: p }
+        let x: f64 = num::cast(tup.0).unwrap();
+        let y: f64 = num::cast(tup.1).unwrap();
+        MBR { minx: x, miny: y, maxx: x, maxy: y }
     }
 }
 
@@ -374,14 +357,10 @@ impl<T> From<[T; 4]> for MBR
 {
     fn from(array: [T; 4]) -> Self {
         MBR::new(
-            Point {
-                x: num::cast(array[0]).unwrap(),
-                y: num::cast(array[1]).unwrap(),
-            },
-            Point {
-                x: num::cast(array[2]).unwrap(),
-                y: num::cast(array[3]).unwrap(),
-            },
+            num::cast(array[0]).unwrap(),
+            num::cast(array[1]).unwrap(),
+            num::cast(array[2]).unwrap(),
+            num::cast(array[3]).unwrap(),
         )
     }
 }
@@ -391,11 +370,9 @@ impl<T> From<[T; 2]> for MBR
         T: NumCast + Copy,
 {
     fn from(array: [T; 2]) -> Self {
-        let p = Point {
-            x: num::cast(array[0]).unwrap(),
-            y: num::cast(array[1]).unwrap(),
-        };
-        MBR { ll: p, ur: p }
+        let x: f64 = num::cast(array[0]).unwrap();
+        let y: f64 = num::cast(array[1]).unwrap();
+        MBR { minx: x, miny: y, maxx: x, maxy: y }
     }
 }
 
@@ -413,27 +390,14 @@ impl<T> From<Vec<[T; 4]>> for Boxes
     }
 }
 
-
-impl From<Point> for MBR {
-    fn from(pt: Point) -> Self {
-        MBR::new_from_pt(pt)
-    }
-}
-
-impl From<AABB<Point>> for MBR {
-    fn from(aab: AABB<Point>) -> Self {
-        MBR::new_raw(aab.lower(), aab.upper())
-    }
-}
-
 impl From<AABB<[f64; 2]>> for MBR {
-    fn from(aab: AABB<[f64; 2]>) -> Self {
-        MBR::new_raw(aab.lower().into(), aab.upper().into())
+    fn from(aabb: AABB<[f64; 2]>) -> Self {
+        MBR::new_from_bounds(aabb.lower(), aabb.upper())
     }
 }
 
 impl Index<usize> for Boxes {
-    type Output = MBR ;
+    type Output = MBR;
     fn index(&self, i: usize) -> &Self::Output {
         &self.boxes[i]
     }
@@ -457,9 +421,9 @@ impl PartialEq for MBR {
 ///Ord for MBR
 impl Ord for MBR {
     fn cmp(&self, other: &Self) -> Ordering {
-        let mut d = self.ll.x - other.ll.x;
+        let mut d = self.minx - other.minx;
         if feq(d, 0.0) {
-            d = self.ll.y - other.ll.y;
+            d = self.miny - other.miny;
         }
         if feq(d, 0.0) {
             Ordering::Equal
@@ -506,25 +470,27 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
     type Output = MBR;
     fn add(self, rhs: &'b MBR) -> MBR {
         MBR {
-            ll: self.ll.min_of_bounds(&rhs.ll),
-            ur: self.ur.max_of_bounds(&rhs.ur),
+            minx: self.minx.min(rhs.minx),
+            miny: self.miny.min(rhs.miny),
+            maxx: self.maxx.max(rhs.maxx),
+            maxy: self.maxy.max(rhs.maxy),
         }
     }
 }
 
 ///RTreeObject for MBR
 impl RTreeObject for MBR {
-    type Envelope = AABB<Point>;
+    type Envelope = AABB<[f64; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
-        AABB::from_corners(self.ll, self.ur)
+        AABB::from_corners(self.ll(), self.ur())
     }
 }
 
 ///PointDistance for MBR
 impl PointDistance for MBR {
-    fn distance_2(&self, pt: &Point) -> f64 {
-        self.distance_square(&MBR::new_raw(*pt, *pt))
+    fn distance_2(&self, pt: &[f64; 2]) -> f64 {
+        self.distance_square(&MBR::new_from_pt(*pt))
     }
 }
 
