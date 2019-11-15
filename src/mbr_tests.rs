@@ -3,19 +3,20 @@ use geom_2d::pt;
 use math_util::round;
 use rstar::Envelope;
 use serde_json;
+use geom_2d::point::Points;
 
 #[test]
 fn test_construction() {
     let m_a: MBR = (0.5, 0.2).into();
     let m_b: MBR = [0.5, 0.2].into();
     assert!(m_a.equals(&m_b));
-    assert_eq!(m_a.as_tuple(), (0.5, 0.2,0.5, 0.2));
-    assert_eq!(m_b.as_array(), [0.5, 0.2,0.5, 0.2]);
+    assert_eq!(m_a.as_tuple(), (0.5, 0.2, 0.5, 0.2));
+    assert_eq!(m_b.as_array(), [0.5, 0.2, 0.5, 0.2]);
     assert!(m_a.is_point());
     assert!(m_b.is_point());
 
     let aabb_a: AABB<Point> = AABB::from_corners(pt!(0.0, 0.0), pt!(0.5, 0.2));
-    let aabb_b: AABB<[f64; 2]> = AABB::from_corners([2.0, 2.0],[-0.5, -0.2]);
+    let aabb_b: AABB<[f64; 2]> = AABB::from_corners([2.0, 2.0], [-0.5, -0.2]);
     let m_a: MBR = aabb_a.into();
     let m_b: MBR = aabb_b.into();
     assert_eq!(aabb_a.area(), m_a.area());
@@ -26,6 +27,24 @@ fn test_construction() {
         serialized,
         String::from(r#"{"ll":{"x":-0.5,"y":-0.2},"ur":{"x":2.0,"y":2.0}}"#)
     );
+
+    let data: Boxes = vec![
+        [-115, 45, -105, 55], [105, 45, 115, 55], [105, -55, 115, -45], [-115, -55, -105, -45],
+    ].into();
+
+    let pts: Points = vec![[-125, -25], [-125, 25], [125, 25], [125, -25], [-125, -25]].into();
+
+    let mut sec_box: MBR = pts[0].into();
+    for p in pts.points {
+        sec_box.expand_to_include_xy(p.x, p.y);
+    }
+    for b in data.boxes.iter() {
+        assert!(sec_box.disjoint(b))
+    }
+    assert!(data[0].disjoint(&sec_box));
+    assert!(data[1].disjoint(&sec_box));
+    assert!(data[2].disjoint(&sec_box));
+    assert!(data[3].disjoint(&sec_box));
 
 
     let m0 = MBR::new(pt!(0.0, 0.0), pt!(0.5, 0.2));

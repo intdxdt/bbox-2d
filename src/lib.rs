@@ -7,6 +7,7 @@ use std::ops;
 
 use coordinate::Coordinate;
 use geom_2d::Point;
+use std::ops::Index;
 
 ///MBR
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -331,6 +332,11 @@ impl MBR {
     }
 }
 
+pub struct Boxes {
+    pub boxes: Vec<MBR>
+}
+
+
 impl<T> From<(T, T, T, T)> for MBR
     where
         T: NumCast + Copy,
@@ -393,6 +399,21 @@ impl<T> From<[T; 2]> for MBR
     }
 }
 
+
+impl<T> From<Vec<[T; 4]>> for Boxes
+    where
+        T: NumCast + Copy,
+{
+    fn from(items: Vec<[T; 4]>) -> Self {
+        let mut boxes = vec![];
+        for array in items {
+            boxes.push(array.into())
+        }
+        Boxes { boxes }
+    }
+}
+
+
 impl From<Point> for MBR {
     fn from(pt: Point) -> Self {
         MBR::new_from_pt(pt)
@@ -405,9 +426,16 @@ impl From<AABB<Point>> for MBR {
     }
 }
 
-impl From<AABB<[f64;2]>> for MBR {
-    fn from(aab: AABB<[f64;2]>) -> Self {
+impl From<AABB<[f64; 2]>> for MBR {
+    fn from(aab: AABB<[f64; 2]>) -> Self {
         MBR::new_raw(aab.lower().into(), aab.upper().into())
+    }
+}
+
+impl Index<usize> for Boxes {
+    type Output = MBR ;
+    fn index(&self, i: usize) -> &Self::Output {
+        &self.boxes[i]
     }
 }
 
