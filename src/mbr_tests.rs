@@ -6,6 +6,14 @@ use serde_json;
 
 #[test]
 fn test_construction() {
+    let m_a: MBR = (0.5, 0.2).into();
+    let m_b: MBR = [0.5, 0.2].into();
+    assert!(m_a.equals(&m_b));
+    assert_eq!(m_a.as_tuple(), (0.5, 0.2,0.5, 0.2));
+    assert_eq!(m_b.as_array(), [0.5, 0.2,0.5, 0.2]);
+    assert!(m_a.is_point());
+    assert!(m_b.is_point());
+
     let m0 = MBR::new(pt!(0.0, 0.0), pt!(0.5, 0.2));
     let m1 = MBR::new(pt!(2.0, 2.0), pt!(-0.5, -0.2));
 
@@ -26,7 +34,7 @@ fn test_construction() {
         m1,
         MBR {
             ll: pt!(2.0, 2.0),
-            ur: pt!(-0.5, -0.2)
+            ur: pt!(-0.5, -0.2),
         }
     );
 
@@ -35,7 +43,7 @@ fn test_construction() {
         m,
         (MBR {
             ll: pt!(0.5, 0.2),
-            ur: pt!(2.0, 2.0)
+            ur: pt!(2.0, 2.0),
         })
     );
 
@@ -43,8 +51,8 @@ fn test_construction() {
         (m.width(), m.height(), m.area(), m.is_point()),
         (1.5, 1.8, 1.5 * 1.8, false)
     );
-    assert_eq!(m.as_tuple(), (0.5, 0.2, 2.0, 2.0));
-    assert_eq!(m.as_array(), [0.5, 0.2, 2.0, 2.0]);
+    assert_eq!(m.as_tuple(), MBR::from((0.5, 0.2, 2.0, 2.0)).as_tuple());
+    assert_eq!(m.as_array(), MBR::from([0.5, 0.2, 2.0, 2.0]).as_array());
 
     let b = m.as_poly_array();
     assert_eq!(
@@ -177,7 +185,7 @@ fn test_ops2() {
 
     let mut m0 = MBR::new_from_array([1., 1., 1., 1.]);
     m0.expand_by_delta(1., 1.);
-    let mut m0_pt = MBR::new_from_pt(Point::new(0., 0.));
+    let mut m0_pt: MBR = Point::new(0., 0.).into();
 
     let m1 = MBR::new_from_array([0., 0., 2., 2.]);
     let m2 = MBR::new_from_array([4., 5., 8., 9.]);
@@ -185,8 +193,8 @@ fn test_ops2() {
     let m1_bounds = MBR::new(Point::new(0., 0.), Point::new(2., 2.));
     let m2_bounds = MBR::new(Point::new(4., 5.), Point::new(8., 9.));
 
-    let m3 = MBR::new_from_array([1.7, 1.5, 5., 9.]);
-    let m4 = MBR::new_from_array([5., 0., 8., 2.]);
+    let m3 = [1.7, 1.5, 5., 9.].into();
+    let m4 = (5., 0., 8., 2.).into();
     let m5 = MBR::new_from_array([5., 11., 8., 9.]);
     let m6 = MBR::new_from_array([0., 0., 2., -2.]);
     let m7 = MBR::new_from_array([-2., 1., 4., -2.]);
@@ -319,9 +327,9 @@ fn test_ops2() {
     assert!(!mp12.intersects_xy(p3.x, p3.y));
     assert!(m1.contains_xy(1., 1.));
 
-    let mbr11 = MBR::new_from_array([1., 1., 1.5, 1.5]);
-    let mbr12 = MBR::new_from_array([1., 1., 2., 2.]);
-    let mbr13 = MBR::new_from_array([1., 1., 2.000045, 2.00001]);
+    let mbr11 = [1., 1., 1.5, 1.5].into();
+    let mbr12 = [1, 1, 2, 2].into();
+    let mbr13 = (1., 1., 2.000045, 2.00001).into();
     let mbr14 = MBR::new_from_array([2.000045, 2.00001, 4.000045, 4.00001]);
 
     assert!(m1.contains(&mbr11));
@@ -363,15 +371,15 @@ fn test_ops2() {
         Point::new(5., 0.),
         Point::new(0., 0.),
     ];
-    assert!(ma.as_array() == arr); //ma modified by expand
+    assert_eq!(ma.as_array(), arr); //ma modified by expand
     for (i, &o) in ma.as_poly_array().iter().enumerate() {
         assert_eq!(o, polyarr[i]);
     }
 
     arr = [1.7, 1.5, 5., 9.];
-    assert!(mc.as_array() == arr); //should not be touched
+    assert_eq!(mc.as_array(), arr); //should not be touched
     arr = [-1., -1., 2., 2.];
-    assert!(md.as_array() == arr); //ma modified by expand
+    assert_eq!(md.as_array(), arr); //ma modified by expand
 
     //mc area
     assert_eq!(mc.area(), 24.75);

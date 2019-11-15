@@ -1,4 +1,4 @@
-use math_util::feq;
+use math_util::{feq, num, NumCast};
 use rstar::{PointDistance, RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -6,7 +6,7 @@ use std::fmt::{Display, Error, Formatter};
 use std::ops;
 
 use coordinate::Coordinate;
-use geom_2d::point::Point;
+use geom_2d::Point;
 
 ///MBR
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -328,6 +328,74 @@ impl MBR {
             ux = self.ur.x,
             uy = self.ur.y
         )
+    }
+}
+
+impl<T> From<(T, T, T, T)> for MBR
+where
+    T: NumCast + Copy,
+{
+    fn from(tup: (T, T, T, T)) -> Self {
+        MBR::new(
+            Point {
+                x: num::cast(tup.0).unwrap(),
+                y: num::cast(tup.1).unwrap(),
+            },
+            Point {
+                x: num::cast(tup.2).unwrap(),
+                y: num::cast(tup.3).unwrap(),
+            },
+        )
+    }
+}
+
+impl<T> From<(T, T)> for MBR
+where
+    T: NumCast + Copy,
+{
+    fn from(tup: (T, T)) -> Self {
+        let p = Point {
+            x: num::cast(tup.0).unwrap(),
+            y: num::cast(tup.1).unwrap(),
+        };
+        MBR { ll: p, ur: p }
+    }
+}
+
+impl<T> From<[T; 4]> for MBR
+where
+    T: NumCast + Copy,
+{
+    fn from(array: [T; 4]) -> Self {
+        MBR::new(
+            Point {
+                x: num::cast(array[0]).unwrap(),
+                y: num::cast(array[1]).unwrap(),
+            },
+            Point {
+                x: num::cast(array[2]).unwrap(),
+                y: num::cast(array[3]).unwrap(),
+            },
+        )
+    }
+}
+
+impl<T> From<[T; 2]> for MBR
+where
+    T: NumCast + Copy,
+{
+    fn from(array: [T; 2]) -> Self {
+        let p = Point {
+            x: num::cast(array[0]).unwrap(),
+            y: num::cast(array[1]).unwrap(),
+        };
+        MBR { ll: p, ur: p }
+    }
+}
+
+impl From<Point> for MBR  {
+    fn from(pt: Point) -> Self {
+        MBR::new_from_pt(pt)
     }
 }
 
