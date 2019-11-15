@@ -332,8 +332,8 @@ impl MBR {
 }
 
 impl<T> From<(T, T, T, T)> for MBR
-where
-    T: NumCast + Copy,
+    where
+        T: NumCast + Copy,
 {
     fn from(tup: (T, T, T, T)) -> Self {
         MBR::new(
@@ -350,8 +350,8 @@ where
 }
 
 impl<T> From<(T, T)> for MBR
-where
-    T: NumCast + Copy,
+    where
+        T: NumCast + Copy,
 {
     fn from(tup: (T, T)) -> Self {
         let p = Point {
@@ -363,8 +363,8 @@ where
 }
 
 impl<T> From<[T; 4]> for MBR
-where
-    T: NumCast + Copy,
+    where
+        T: NumCast + Copy,
 {
     fn from(array: [T; 4]) -> Self {
         MBR::new(
@@ -381,8 +381,8 @@ where
 }
 
 impl<T> From<[T; 2]> for MBR
-where
-    T: NumCast + Copy,
+    where
+        T: NumCast + Copy,
 {
     fn from(array: [T; 2]) -> Self {
         let p = Point {
@@ -393,9 +393,21 @@ where
     }
 }
 
-impl From<Point> for MBR  {
+impl From<Point> for MBR {
     fn from(pt: Point) -> Self {
         MBR::new_from_pt(pt)
+    }
+}
+
+impl From<AABB<Point>> for MBR {
+    fn from(aab: AABB<Point>) -> Self {
+        MBR::new_raw(aab.lower(), aab.upper())
+    }
+}
+
+impl From<AABB<[f64;2]>> for MBR {
+    fn from(aab: AABB<[f64;2]>) -> Self {
+        MBR::new_raw(aab.lower().into(), aab.upper().into())
     }
 }
 

@@ -14,6 +14,20 @@ fn test_construction() {
     assert!(m_a.is_point());
     assert!(m_b.is_point());
 
+    let aabb_a: AABB<Point> = AABB::from_corners(pt!(0.0, 0.0), pt!(0.5, 0.2));
+    let aabb_b: AABB<[f64; 2]> = AABB::from_corners([2.0, 2.0],[-0.5, -0.2]);
+    let m_a: MBR = aabb_a.into();
+    let m_b: MBR = aabb_b.into();
+    assert_eq!(aabb_a.area(), m_a.area());
+    assert_eq!(aabb_b.area(), m_b.area());
+    let serialized = serde_json::to_string(&m_b).unwrap();
+
+    assert_eq!(
+        serialized,
+        String::from(r#"{"ll":{"x":-0.5,"y":-0.2},"ur":{"x":2.0,"y":2.0}}"#)
+    );
+
+
     let m0 = MBR::new(pt!(0.0, 0.0), pt!(0.5, 0.2));
     let m1 = MBR::new(pt!(2.0, 2.0), pt!(-0.5, -0.2));
 
