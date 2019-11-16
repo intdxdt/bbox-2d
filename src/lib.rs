@@ -31,7 +31,6 @@ impl MBR {
         MBR { minx, miny, maxx, maxy }
     }
 
-
     ///New MBR from zero value
     pub fn new_default() -> MBR {
         MBR { minx: 0.0, miny: 0.0, maxx: 0.0, maxy: 0.0 }
@@ -137,10 +136,17 @@ impl MBR {
             && (other.maxx <= self.maxx)
             && (other.maxy <= self.maxy)
     }
+
     ///contains x, y
     #[inline]
     pub fn contains_xy(&self, x: f64, y: f64) -> bool {
         (x >= self.minx) && (x <= self.maxx) && (y >= self.miny) && (y <= self.maxy)
+    }
+
+    ///contains point
+    #[inline]
+    pub fn contains_point(&self, pt: [f64; 2]) -> bool {
+        self.contains_xy(pt[0], pt[1])
     }
 
     ///Completely contains bonding box
@@ -158,6 +164,13 @@ impl MBR {
     #[inline]
     pub fn completely_contains_xy(&self, x: f64, y: f64) -> bool {
         (x > self.minx) && (x < self.maxx) && (y > self.miny) && (y < self.maxy)
+    }
+
+    ///completely_contains_point is true if mbr completely contains location with point{x, y}
+    ///without touching boundaries
+    #[inline]
+    pub fn completely_contains_point(&self, pt: [f64; 2]) -> bool {
+        self.completely_contains_xy(pt[0], pt[1])
     }
 
     ///Translate bounding box by change in dx and dy.
@@ -238,6 +251,11 @@ impl MBR {
         self
     }
 
+    ///Expand to include point(x, y)
+    pub fn expand_to_include_point(&mut self, pt: [f64; 2]) -> &mut Self {
+        self.expand_to_include_xy(pt[0], pt[1])
+    }
+
     ///Expand to include x,y
     pub fn expand_to_include_xy(&mut self, x: f64, y: f64) -> &mut Self {
         if x < self.minx {
@@ -269,22 +287,19 @@ impl MBR {
 
     ///computes dx and dy for computing hypot
     pub fn distance_dxdy(&self, other: &Self) -> (f64, f64) {
-        let mut dx = 0.0;
-        let mut dy = 0.0;
-
         // find closest edge by x
-        if self.maxx < other.minx {
-            dx = other.minx - self.maxx
+        let dx = if self.maxx < other.minx {
+            other.minx - self.maxx
         } else if self.minx > other.maxx {
-            dx = self.minx - other.maxx
-        }
+            self.minx - other.maxx
+        } else { 0.0 };
 
         // find closest edge by y
-        if self.maxy < other.miny {
-            dy = other.miny - self.maxy
+        let dy = if self.maxy < other.miny {
+            other.miny - self.maxy
         } else if self.miny > other.maxy {
-            dy = self.miny - other.maxy
-        }
+            self.miny - other.maxy
+        } else { 0.0 };
 
         (dx, dy)
     }
@@ -294,7 +309,6 @@ impl MBR {
         if self.intersects(other) {
             return 0.0;
         }
-
         let (dx, dy) = self.distance_dxdy(other);
         dx.hypot(dy)
     }

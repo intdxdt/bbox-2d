@@ -34,7 +34,7 @@ fn test_construction() {
 
     let mut sec_box: MBR = pts[0].into();
     for p in pts {
-        sec_box.expand_to_include_xy(p[0], p[1]);
+        sec_box.expand_to_include_point(p);
     }
     for b in data.boxes.iter() {
         assert!(sec_box.disjoint(b))
@@ -202,6 +202,13 @@ fn test_ops_1() {
     assert_eq!(m1.distance_square(&m2), round(d * d, 12));
     assert_eq!(m1.distance_2(&m8.ll()), m1.distance_square(&m8));
     assert_eq!(m1.distance_2(&m8.ur()), m1.distance_square(&m8));
+
+    let a = MBR::new_from_array([0., 0., 2., 0.]);
+    let b = MBR::new_from_array([4., 0., 7., 0.]);
+    assert_eq!(a.distance(&b), 2.0);
+    let a = MBR::new_from_array([0., 0., 0., 2.]);
+    let b = MBR::new_from_array([0., 4., 0., 7.]);
+    assert_eq!(a.distance(&b), 2.0);
 }
 
 #[test]
@@ -315,6 +322,7 @@ fn test_ops2() {
     assert_eq!(m1.distance(&m3), 0.0);
     assert_eq!(m1.distance_square(&m3), 0.0);
 
+
     let a = MBR::new_from_array([
         -7.703505430214746,
         3.0022503796012305,
@@ -351,7 +359,7 @@ fn test_ops2() {
     assert!(mp12.intersects_bounds(&p3, &p4));
     assert!(!mp12.intersects_bounds(&m1.ll(), &m1.ur()));
     assert!(!mp12.intersects_xy(p3[0], p3[1]));
-    assert!(m1.contains_xy(1., 1.));
+    assert!(m1.contains_point([1., 1.]));
 
     let mbr11 = [1., 1., 1.5, 1.5].into();
     let mbr12 = [1, 1, 2, 2].into();
@@ -364,13 +372,13 @@ fn test_ops2() {
     assert!(!m1.disjoint(&mbr13)); // False
     assert!(m1.disjoint(&mbr14)); // True disjoint
 
-    assert!(m1.contains_xy(1.5, 1.5));
-    assert!(m1.contains_xy(2., 2.));
+    assert!(m1.contains_point([1.5, 1.5]));
+    assert!(m1.contains_point([2., 2.]));
 
     assert!(m1.completely_contains(&mbr11));
-    assert!(m1.completely_contains_xy(1.5, 1.5));
-    assert!(m1.completely_contains_xy(1.5, 1.5));
-    assert!(!m1.completely_contains_xy(2., 2.));
+    assert!(m1.completely_contains_point([1.5, 1.5]));
+    assert!(m1.completely_contains_point([1.5, 1.5]));
+    assert!(!m1.completely_contains_point([2., 2.]));
     assert!(!m1.completely_contains(&mbr12));
     assert!(!m1.completely_contains(&mbr13));
 
