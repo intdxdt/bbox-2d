@@ -429,9 +429,9 @@ fn test_ops2() {
     assert_eq!(mby.as_array(), arr);
 
     //    SECTION("wkt string")
-    assert_eq!(m1.wkt(), "POLYGON ((0 0,0 2,2 2,2 0,0 0))".to_string());
+    assert_eq!(m1.wkt(), "POLYGON((0 0,0 2,2 2,2 0,0 0))".to_string());
     assert_eq!(
         format!("{}", m1),
-        "POLYGON ((0 0,0 2,2 2,2 0,0 0))".to_string()
+        "POLYGON((0 0,0 2,2 2,2 0,0 0))".to_string()
     );
 }

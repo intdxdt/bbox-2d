@@ -326,7 +326,7 @@ impl MBR {
     ///WKT string
     pub fn wkt(&self) -> String {
         format!(
-            "POLYGON (({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
+            "POLYGON(({lx} {ly},{lx} {uy},{ux} {uy},{ux} {ly},{lx} {ly}))",
             lx = self.minx,
             ly = self.miny,
             ux = self.maxx,
