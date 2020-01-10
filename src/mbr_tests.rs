@@ -27,10 +27,20 @@ fn test_construction() {
     );
 
     let data: Boxes = vec![
-        [-115, 45, -105, 55], [105, 45, 115, 55], [105, -55, 115, -45], [-115, -55, -105, -45],
-    ].into();
+        [-115, 45, -105, 55],
+        [105, 45, 115, 55],
+        [105, -55, 115, -45],
+        [-115, -55, -105, -45],
+    ]
+    .into();
 
-    let pts = vec![[-125., -25.], [-125., 25.], [125., 25.], [125., -25.], [-125., -25.]];
+    let pts = vec![
+        [-125., -25.],
+        [-125., 25.],
+        [125., 25.],
+        [125., -25.],
+        [-125., -25.],
+    ];
 
     let mut sec_box: MBR = pts[0].into();
     for p in pts {
@@ -43,7 +53,6 @@ fn test_construction() {
     assert!(data[1].disjoint(&sec_box));
     assert!(data[2].disjoint(&sec_box));
     assert!(data[3].disjoint(&sec_box));
-
 
     let m0 = MBR::new(0.0, 0.0, 0.5, 0.2);
     let m1 = MBR::new(2.0, 2.0, -0.5, -0.2);
@@ -72,9 +81,7 @@ fn test_construction() {
     );
 
     let m = MBR::new(2.0, 2.0, 0.5, 0.2);
-    assert_eq!(
-        m, MBR::from((0.5, 0.2, 2.0, 2.0)),
-    );
+    assert_eq!(m, MBR::from((0.5, 0.2, 2.0, 2.0)),);
 
     assert_eq!(
         (m.width(), m.height(), m.area(), m.is_point()),
@@ -84,10 +91,7 @@ fn test_construction() {
     assert_eq!(m.as_array(), MBR::from([0.5, 0.2, 2.0, 2.0]).as_array());
 
     let b = m.as_poly_array();
-    assert_eq!(
-        (b[0], b[4], b.len()),
-        ([0.5, 0.2], [0.5, 0.2], 5)
-    );
+    assert_eq!((b[0], b[4], b.len()), ([0.5, 0.2], [0.5, 0.2], 5));
 
     let m1 = m.copy();
     assert_eq!((m1.equals(&m), m1.area()), (m1 == m, m.area()));
@@ -322,7 +326,6 @@ fn test_ops2() {
     assert_eq!(m1.distance(&m3), 0.0);
     assert_eq!(m1.distance_square(&m3), 0.0);
 
-
     let a = MBR::new_from_array([
         -7.703505430214746,
         3.0022503796012305,
@@ -398,7 +401,7 @@ fn test_ops2() {
     assert!(md.equals(&md_mb));
 
     let mut arr = [0., 0., 5., 9.];
-    let polyarr = vec![[0., 0.], [0., 9.], [5., 9.], [5., 0.], [0., 0.], ];
+    let polyarr = vec![[0., 0.], [0., 9.], [5., 9.], [5., 0.], [0., 0.]];
     assert_eq!(ma.as_array(), arr); //ma modified by expand
     for (i, &o) in ma.as_poly_array().iter().enumerate() {
         assert_eq!(o, polyarr[i]);
