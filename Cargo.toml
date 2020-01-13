@@ -11,6 +11,7 @@ path = "example/01.rs"
 
 [dependencies]
 math-util = { git = "https://github.com/intdxdt/math-util", branch="master"}
+point = { git = "https://github.com/intdxdt/point", branch="master"}
 rstar = { git = "https://github.com/intdxdt/rstar", branch="master"}
 serde =   { version = "1.0.101", features = ["derive"] }
 
