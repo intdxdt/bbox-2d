@@ -1,11 +1,10 @@
 use math_util::{feq, num, NumCast};
-use rstar::{PointDistance, RTreeObject, AABB, Point as RPt};
+use rstar::{PointDistance, RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Error, Formatter};
 use std::ops;
 use std::ops::Index;
-use point::Point;
 
 ///MBR
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -495,7 +494,7 @@ impl<'a, 'b> ops::Add<&'b MBR> for &'a MBR {
 
 ///RTreeObject for MBR
 impl RTreeObject for MBR {
-    type Envelope = AABB<Point>;
+    type Envelope = AABB<[f64; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
         AABB::from_corners(self.ll().into(), self.ur().into())
@@ -504,8 +503,8 @@ impl RTreeObject for MBR {
 
 ///PointDistance for MBR
 impl PointDistance for MBR {
-    fn distance_2(&self, pt: &Point) -> f64 {
-        self.distance_square(&MBR::new_from_pt(pt.as_array()))
+    fn distance_2(&self, pt: &[f64; 2]) -> f64 {
+        self.distance_square(&MBR::new_from_pt(*pt))
     }
 }
 
